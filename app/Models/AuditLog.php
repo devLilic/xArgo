@@ -7,23 +7,25 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable([
-    'actor_id',
-    'event',
-    'target_type',
-    'target_id',
-    'metadata',
+    'user_id',
+    'action',
+    'entity_type',
+    'entity_id',
+    'meta_json',
 ])]
 class AuditLog extends Model
 {
+    protected $table = 'admin_audit_logs';
+
     protected function casts(): array
     {
         return [
-            'metadata' => 'array',
+            'meta_json' => 'array',
         ];
     }
 
-    public function actor(): BelongsTo
+    public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'actor_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\AppController;
+use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\LicenseActivationController;
 use App\Http\Controllers\Admin\LicenseController;
 use App\Http\Controllers\Admin\LicenseHeartbeatController;
@@ -86,6 +87,12 @@ Route::get('/activations/{activation}', [LicenseActivationController::class, 'sh
 
 Route::get('/heartbeats', [LicenseHeartbeatController::class, 'index'])
     ->name('heartbeats.index');
+
+Route::get('/audit-logs', [AuditLogController::class, 'index'])
+    ->name('audit-logs.index');
+
+Route::get('/audit-logs/{auditLog}', [AuditLogController::class, 'show'])
+    ->name('audit-logs.show');
 
 Route::get('/licenses/{license}/activations/{activation}/rebind', [LicenseActivationController::class, 'edit'])
     ->name('licenses.activations.rebind.edit');

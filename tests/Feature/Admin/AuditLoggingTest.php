@@ -26,10 +26,10 @@ class AuditLoggingTest extends TestCase
             ])
             ->assertRedirect(route('admin.dashboard'));
 
-        $this->assertDatabaseHas('audit_logs', [
-            'actor_id' => $actor->id,
-            'event' => 'admin.invitation.created',
-            'target_type' => 'user_invitation',
+        $this->assertDatabaseHas('admin_audit_logs', [
+            'user_id' => $actor->id,
+            'action' => 'admin.invitation.created',
+            'entity_type' => 'user_invitation',
         ]);
     }
 
@@ -44,11 +44,11 @@ class AuditLoggingTest extends TestCase
             ])
             ->assertRedirect(route('admin.users.show', $target));
 
-        $this->assertDatabaseHas('audit_logs', [
-            'actor_id' => $actor->id,
-            'event' => 'admin.user.role_changed',
-            'target_type' => 'user',
-            'target_id' => $target->id,
+        $this->assertDatabaseHas('admin_audit_logs', [
+            'user_id' => $actor->id,
+            'action' => 'admin.user.role_changed',
+            'entity_type' => 'user',
+            'entity_id' => $target->id,
         ]);
     }
 
@@ -63,11 +63,11 @@ class AuditLoggingTest extends TestCase
             ])
             ->assertRedirect(route('admin.users.show', $target));
 
-        $this->assertDatabaseHas('audit_logs', [
-            'actor_id' => $actor->id,
-            'event' => 'admin.user.deactivated',
-            'target_type' => 'user',
-            'target_id' => $target->id,
+        $this->assertDatabaseHas('admin_audit_logs', [
+            'user_id' => $actor->id,
+            'action' => 'admin.user.deactivated',
+            'entity_type' => 'user',
+            'entity_id' => $target->id,
         ]);
 
         $this->actingAs($actor)
@@ -76,11 +76,11 @@ class AuditLoggingTest extends TestCase
             ])
             ->assertRedirect(route('admin.users.show', $target));
 
-        $this->assertDatabaseHas('audit_logs', [
-            'actor_id' => $actor->id,
-            'event' => 'admin.user.reactivated',
-            'target_type' => 'user',
-            'target_id' => $target->id,
+        $this->assertDatabaseHas('admin_audit_logs', [
+            'user_id' => $actor->id,
+            'action' => 'admin.user.reactivated',
+            'entity_type' => 'user',
+            'entity_id' => $target->id,
         ]);
     }
 
@@ -107,11 +107,11 @@ class AuditLoggingTest extends TestCase
 
         $license = License::query()->where('customer_email', 'license-audit@example.com')->firstOrFail();
 
-        $this->assertDatabaseHas('audit_logs', [
-            'actor_id' => $actor->id,
-            'event' => 'admin.license.created',
-            'target_type' => 'license',
-            'target_id' => $license->id,
+        $this->assertDatabaseHas('admin_audit_logs', [
+            'user_id' => $actor->id,
+            'action' => 'admin.license.created',
+            'entity_type' => 'license',
+            'entity_id' => $license->id,
         ]);
     }
 
@@ -140,11 +140,11 @@ class AuditLoggingTest extends TestCase
             ])
             ->assertRedirect(route('admin.licenses.edit', $license->id));
 
-        $this->assertDatabaseHas('audit_logs', [
-            'actor_id' => $actor->id,
-            'event' => 'admin.license.updated',
-            'target_type' => 'license',
-            'target_id' => $license->id,
+        $this->assertDatabaseHas('admin_audit_logs', [
+            'user_id' => $actor->id,
+            'action' => 'admin.license.updated',
+            'entity_type' => 'license',
+            'entity_id' => $license->id,
         ]);
     }
 
@@ -159,11 +159,11 @@ class AuditLoggingTest extends TestCase
             ])
             ->assertRedirect(route('admin.licenses.show', $license->id));
 
-        $this->assertDatabaseHas('audit_logs', [
-            'actor_id' => $actor->id,
-            'event' => 'admin.license.suspended',
-            'target_type' => 'license',
-            'target_id' => $license->id,
+        $this->assertDatabaseHas('admin_audit_logs', [
+            'user_id' => $actor->id,
+            'action' => 'admin.license.suspended',
+            'entity_type' => 'license',
+            'entity_id' => $license->id,
         ]);
 
         $this->actingAs($actor)
@@ -172,11 +172,11 @@ class AuditLoggingTest extends TestCase
             ])
             ->assertRedirect(route('admin.licenses.show', $license->id));
 
-        $this->assertDatabaseHas('audit_logs', [
-            'actor_id' => $actor->id,
-            'event' => 'admin.license.revoked',
-            'target_type' => 'license',
-            'target_id' => $license->id,
+        $this->assertDatabaseHas('admin_audit_logs', [
+            'user_id' => $actor->id,
+            'action' => 'admin.license.revoked',
+            'entity_type' => 'license',
+            'entity_id' => $license->id,
         ]);
 
         $this->actingAs($actor)
@@ -185,11 +185,11 @@ class AuditLoggingTest extends TestCase
             ])
             ->assertRedirect(route('admin.licenses.show', $license->id));
 
-        $this->assertDatabaseHas('audit_logs', [
-            'actor_id' => $actor->id,
-            'event' => 'admin.license.reactivated',
-            'target_type' => 'license',
-            'target_id' => $license->id,
+        $this->assertDatabaseHas('admin_audit_logs', [
+            'user_id' => $actor->id,
+            'action' => 'admin.license.reactivated',
+            'entity_type' => 'license',
+            'entity_id' => $license->id,
         ]);
     }
 
@@ -203,11 +203,11 @@ class AuditLoggingTest extends TestCase
             ->patch(route('admin.licenses.restore', $license->id))
             ->assertRedirect(route('admin.licenses.show', $license->id));
 
-        $this->assertDatabaseHas('audit_logs', [
-            'actor_id' => $actor->id,
-            'event' => 'admin.license.restored',
-            'target_type' => 'license',
-            'target_id' => $license->id,
+        $this->assertDatabaseHas('admin_audit_logs', [
+            'user_id' => $actor->id,
+            'action' => 'admin.license.restored',
+            'entity_type' => 'license',
+            'entity_id' => $license->id,
         ]);
     }
 
@@ -227,11 +227,11 @@ class AuditLoggingTest extends TestCase
             ])
             ->assertRedirect(route('admin.licenses.show', $license->id));
 
-        $this->assertDatabaseHas('audit_logs', [
-            'actor_id' => $actor->id,
-            'event' => 'admin.license.activation.rebound',
-            'target_type' => 'license_activation',
-            'target_id' => $activation->id,
+        $this->assertDatabaseHas('admin_audit_logs', [
+            'user_id' => $actor->id,
+            'action' => 'admin.license.activation.rebound',
+            'entity_type' => 'license_activation',
+            'entity_id' => $activation->id,
         ]);
     }
 }

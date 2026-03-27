@@ -12,6 +12,7 @@ type DashboardProps = {
         viewPlans: boolean;
         viewLicenses: boolean;
         viewHeartbeats: boolean;
+        viewAuditLogs: boolean;
     };
     user?: {
         name: string;
@@ -135,6 +136,14 @@ export default function Dashboard({
                                             className="mr-3 inline-flex rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white transition hover:border-white/30"
                                         >
                                             View heartbeats
+                                        </Link>
+                                    ) : null}
+                                    {can.viewAuditLogs ? (
+                                        <Link
+                                            href={route('admin.audit-logs.index')}
+                                            className="mr-3 inline-flex rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white transition hover:border-white/30"
+                                        >
+                                            View audit logs
                                         </Link>
                                     ) : null}
                                     <Link

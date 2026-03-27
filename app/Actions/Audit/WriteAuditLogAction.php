@@ -4,25 +4,25 @@ namespace App\Actions\Audit;
 
 use App\Models\AuditLog;
 use App\Models\User;
+use App\Services\Audit\AuditLogger;
 
 class WriteAuditLogAction
 {
+    public function __construct(
+        private readonly AuditLogger $auditLogger,
+    ) {
+    }
+
     /**
-     * @param  array<string, mixed>  $metadata
+     * @param  array<string, mixed>  $metaJson
      */
     public function execute(
-        ?User $actor,
-        string $event,
-        string $targetType,
-        ?int $targetId = null,
-        array $metadata = [],
+        ?User $user,
+        string $action,
+        string $entityType,
+        ?int $entityId = null,
+        array $metaJson = [],
     ): AuditLog {
-        return AuditLog::query()->create([
-            'actor_id' => $actor?->id,
-            'event' => $event,
-            'target_type' => $targetType,
-            'target_id' => $targetId,
-            'metadata' => $metadata,
-        ]);
+        return $this->auditLogger->write($user, $action, $entityType, $entityId, $metaJson);
     }
 }

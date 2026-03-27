@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Actions\Audit\WriteAuditLogAction;
 use App\Domain\Auth\Role;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateUserActivityRequest;
 use App\Http\Requests\Admin\UpdateUserRoleRequest;
 use App\Models\User;
+use App\Services\Audit\AuditLogger;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\RedirectResponse;
@@ -55,7 +55,7 @@ class UserController extends Controller
     public function updateRole(
         UpdateUserRoleRequest $request,
         User $user,
-        WriteAuditLogAction $writeAuditLog,
+        AuditLogger $auditLogger,
     ): RedirectResponse
     {
         $this->authorize('updateRole', $user);
@@ -67,7 +67,7 @@ class UserController extends Controller
             'role' => $newRole,
         ])->save();
 
-        $writeAuditLog->execute(
+        $auditLogger->write(
             $request->user(),
             'admin.user.role_changed',
             'user',
@@ -87,7 +87,7 @@ class UserController extends Controller
     public function updateActivity(
         UpdateUserActivityRequest $request,
         User $user,
-        WriteAuditLogAction $writeAuditLog,
+        AuditLogger $auditLogger,
     ): RedirectResponse
     {
         $this->authorize('toggleActive', $user);
@@ -98,7 +98,7 @@ class UserController extends Controller
             'deactivated_at' => $active ? null : now(),
         ])->save();
 
-        $writeAuditLog->execute(
+        $auditLogger->write(
             $request->user(),
             $active ? 'admin.user.reactivated' : 'admin.user.deactivated',
             'user',

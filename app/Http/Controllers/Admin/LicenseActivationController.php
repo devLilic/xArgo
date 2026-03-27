@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Actions\Audit\WriteAuditLogAction;
 use App\Actions\Licensing\ManualRebindLicenseActivationAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\RebindLicenseActivationRequest;
 use App\Models\App;
 use App\Models\License;
 use App\Models\LicenseActivation;
+use App\Services\Audit\AuditLogger;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -89,7 +89,7 @@ class LicenseActivationController extends Controller
         int $license,
         int $activation,
         ManualRebindLicenseActivationAction $manualRebind,
-        WriteAuditLogAction $writeAuditLog,
+        AuditLogger $auditLogger,
     ): RedirectResponse {
         [$managedLicense, $managedActivation] = $this->resolveScopedModels($license, $activation);
 
@@ -98,7 +98,7 @@ class LicenseActivationController extends Controller
         $before = $this->activationAuditSnapshot($managedActivation);
         $reboundActivation = $manualRebind->execute($managedActivation, $request->validated());
 
-        $writeAuditLog->execute(
+        $auditLogger->write(
             $request->user(),
             'admin.license.activation.rebound',
             'license_activation',

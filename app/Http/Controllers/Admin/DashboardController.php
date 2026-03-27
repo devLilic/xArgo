@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\App;
+use App\Models\AuditLog;
 use App\Models\License;
 use App\Models\LicenseHeartbeat;
 use App\Models\LicensePlan;
@@ -27,6 +28,7 @@ class DashboardController extends Controller
                 'viewPlans' => request()->user()->can('viewAny', LicensePlan::class),
                 'viewLicenses' => request()->user()->can('viewAny', License::class),
                 'viewHeartbeats' => request()->user()->can('viewAny', LicenseHeartbeat::class),
+                'viewAuditLogs' => request()->user()->can('viewAny', AuditLog::class),
             ],
             'user' => request()->user()?->only([
                 'name',

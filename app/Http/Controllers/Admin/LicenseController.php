@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Actions\Audit\WriteAuditLogAction;
 use App\Actions\Licensing\CreateLicenseAction;
 use App\Actions\Licensing\TransitionLicenseStatusAction;
 use App\Actions\Licensing\UpdateLicenseAction;
@@ -14,6 +13,7 @@ use App\Http\Requests\Admin\UpdateLicenseStatusRequest;
 use App\Models\App;
 use App\Models\License;
 use App\Models\LicensePlan;
+use App\Services\Audit\AuditLogger;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -118,7 +118,7 @@ class LicenseController extends Controller
     public function store(
         StoreLicenseRequest $request,
         CreateLicenseAction $createLicense,
-        WriteAuditLogAction $writeAuditLog,
+        AuditLogger $auditLogger,
     ): RedirectResponse
     {
         $this->authorize('create', License::class);
@@ -126,7 +126,7 @@ class LicenseController extends Controller
         $plan = LicensePlan::query()->findOrFail($request->integer('plan_id'));
 
         $license = $createLicense->execute($plan, $request->validated());
-        $this->writeLicenseAuditLog($writeAuditLog, $request, 'admin.license.created', $license, [
+        $this->writeLicenseAuditLog($auditLogger, $request, 'admin.license.created', $license, [
             'created_status' => $license->status->value,
         ]);
 
@@ -165,7 +165,7 @@ class LicenseController extends Controller
         UpdateLicenseRequest $request,
         int $license,
         UpdateLicenseAction $updateLicense,
-        WriteAuditLogAction $writeAuditLog,
+        AuditLogger $auditLogger,
     ): RedirectResponse
     {
         $license = $this->findManagedLicense($license);
@@ -174,7 +174,7 @@ class LicenseController extends Controller
         $before = $this->licenseAuditSnapshot($license);
         $updateLicense->execute($license, $request->validated());
         $updatedLicense = $license->fresh(['app', 'plan']);
-        $this->writeLicenseAuditLog($writeAuditLog, $request, 'admin.license.updated', $updatedLicense, [
+        $this->writeLicenseAuditLog($auditLogger, $request, 'admin.license.updated', $updatedLicense, [
             'before' => $before,
             'after' => $this->licenseAuditSnapshot($updatedLicense),
         ]);
@@ -188,7 +188,7 @@ class LicenseController extends Controller
         UpdateLicenseStatusRequest $request,
         int $license,
         TransitionLicenseStatusAction $transitionStatus,
-        WriteAuditLogAction $writeAuditLog,
+        AuditLogger $auditLogger,
     ): RedirectResponse
     {
         $license = $this->findManagedLicense($license);
@@ -201,7 +201,7 @@ class LicenseController extends Controller
             'revoke' => 'admin.license.revoked',
             'reactivate' => 'admin.license.reactivated',
         };
-        $this->writeLicenseAuditLog($writeAuditLog, $request, $event, $updatedLicense, [
+        $this->writeLicenseAuditLog($auditLogger, $request, $event, $updatedLicense, [
             'before_status' => $previousStatus,
             'after_status' => $updatedLicense->status->value,
         ]);
@@ -223,14 +223,14 @@ class LicenseController extends Controller
             ->with('status', 'License archived.');
     }
 
-    public function restore(Request $request, int $license, WriteAuditLogAction $writeAuditLog): RedirectResponse
+    public function restore(Request $request, int $license, AuditLogger $auditLogger): RedirectResponse
     {
         $license = $this->findManagedLicense($license);
         $this->authorize('restore', $license);
 
         $license->restore();
         $restoredLicense = $license->fresh(['app', 'plan']);
-        $this->writeLicenseAuditLog($writeAuditLog, $request, 'admin.license.restored', $restoredLicense, [
+        $this->writeLicenseAuditLog($auditLogger, $request, 'admin.license.restored', $restoredLicense, [
             'restored_from_archived' => true,
         ]);
 
@@ -357,13 +357,13 @@ class LicenseController extends Controller
     }
 
     private function writeLicenseAuditLog(
-        WriteAuditLogAction $writeAuditLog,
+        AuditLogger $auditLogger,
         Request $request,
         string $event,
         License $license,
         array $metadata = [],
     ): void {
-        $writeAuditLog->execute(
+        $auditLogger->write(
             $request->user(),
             $event,
             'license',

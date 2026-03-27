@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\App;
+use App\Models\AuditLog;
 use App\Models\License;
 use App\Models\LicenseActivation;
 use App\Models\LicenseHeartbeat;
@@ -10,6 +11,7 @@ use App\Models\LicensePlan;
 use App\Models\User;
 use App\Models\UserInvitation;
 use App\Policies\AppPolicy;
+use App\Policies\AuditLogPolicy;
 use App\Policies\LicensePolicy;
 use App\Policies\LicenseActivationPolicy;
 use App\Policies\LicenseHeartbeatPolicy;
@@ -48,6 +50,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Gate::policy(App::class, AppPolicy::class);
+        Gate::policy(AuditLog::class, AuditLogPolicy::class);
         Gate::policy(License::class, LicensePolicy::class);
         Gate::policy(LicenseActivation::class, LicenseActivationPolicy::class);
         Gate::policy(LicenseHeartbeat::class, LicenseHeartbeatPolicy::class);
