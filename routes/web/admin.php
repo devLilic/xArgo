@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\AppController;
+use App\Http\Controllers\Admin\LicensePlanController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UserInvitationController;
 use Illuminate\Support\Facades\Route;
@@ -21,3 +23,27 @@ Route::patch('/users/{user}/role', [UserController::class, 'updateRole'])
 
 Route::patch('/users/{user}/activity', [UserController::class, 'updateActivity'])
     ->name('users.activity.update');
+
+Route::get('/apps', [AppController::class, 'index'])
+    ->name('apps.index');
+
+Route::post('/apps', [AppController::class, 'store'])
+    ->name('apps.store');
+
+Route::get('/apps/{app}/edit', [AppController::class, 'edit'])
+    ->name('apps.edit');
+
+Route::patch('/apps/{app}', [AppController::class, 'update'])
+    ->name('apps.update');
+
+Route::get('/plans', [LicensePlanController::class, 'index'])
+    ->name('plans.index');
+
+Route::post('/plans', [LicensePlanController::class, 'store'])
+    ->name('plans.store');
+
+Route::get('/plans/{plan}/edit', [LicensePlanController::class, 'edit'])
+    ->name('plans.edit');
+
+Route::patch('/plans/{plan}', [LicensePlanController::class, 'update'])
+    ->name('plans.update');
