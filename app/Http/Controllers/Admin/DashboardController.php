@@ -16,6 +16,10 @@ class DashboardController extends Controller
             'appName' => config('app.name'),
             'environment' => app()->environment(),
             'invitationStatus' => session('status'),
+            'can' => [
+                'inviteUsers' => request()->user()->can('create', \App\Models\UserInvitation::class),
+                'viewUsers' => request()->user()->can('viewAny', \App\Models\User::class),
+            ],
             'user' => request()->user()?->only([
                 'name',
                 'email',

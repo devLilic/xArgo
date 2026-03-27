@@ -20,4 +20,14 @@ enum Role: string
     {
         return true;
     }
+
+    public function canViewUsers(): bool
+    {
+        return true;
+    }
+
+    public function canManageUsers(): bool
+    {
+        return $this === self::SUPER_ADMIN;
+    }
 }

@@ -13,6 +13,8 @@ class AccessControlTest extends TestCase
 
     public function test_read_only_users_can_view_the_admin_dashboard(): void
     {
+        $this->withoutVite();
+
         $user = User::factory()->readOnly()->create();
 
         $this->actingAs($user)
