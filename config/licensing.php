@@ -1,6 +1,11 @@
 <?php
 
 return [
+    'identifiers' => [
+        'license_key_prefix' => env('LICENSING_LICENSE_KEY_PREFIX', 'XARGO'),
+        'public_key_prefix' => env('LICENSING_PUBLIC_KEY_PREFIX', 'lic_'),
+    ],
+
     'devices' => [
         'default_max_devices' => (int) env('LICENSING_DEFAULT_MAX_DEVICES', 1),
         'heartbeat_interval_seconds' => (int) env('LICENSING_HEARTBEAT_INTERVAL_SECONDS', 3600),
