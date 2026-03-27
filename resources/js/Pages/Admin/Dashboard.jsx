@@ -1,6 +1,6 @@
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 
-export default function Dashboard({ appName, environment }) {
+export default function Dashboard({ appName, environment, user }) {
     return (
         <>
             <Head title="Licensing Server" />
@@ -20,6 +20,9 @@ export default function Dashboard({ appName, environment }) {
                                     <p className="max-w-2xl text-base leading-7 text-slate-600">
                                         Laravel, Inertia, React, Vite, and Tailwind are wired for an
                                         internal admin panel and synchronous licensing APIs.
+                                    </p>
+                                    <p className="text-sm text-slate-500">
+                                        Signed in as {user?.email}
                                     </p>
                                 </div>
                             </div>
@@ -46,6 +49,16 @@ export default function Dashboard({ appName, environment }) {
                                         <dd className="font-medium">Shared hosting safe</dd>
                                     </div>
                                 </dl>
+                                <div className="mt-6">
+                                    <Link
+                                        as="button"
+                                        href={route('logout')}
+                                        method="post"
+                                        className="inline-flex rounded-full border border-emerald-400/30 px-4 py-2 text-sm font-medium text-emerald-200 transition hover:border-emerald-300 hover:text-white"
+                                    >
+                                        Sign out
+                                    </Link>
+                                </div>
                             </div>
                         </div>
                     </section>
