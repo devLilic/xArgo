@@ -61,4 +61,43 @@ class AccessControlTest extends TestCase
 
         $this->assertSame(Role::READ_ONLY, $user->role);
     }
+
+    public function test_guests_are_redirected_from_protected_admin_routes(): void
+    {
+        $target = User::factory()->readOnly()->create();
+
+        $this->get(route('admin.dashboard'))
+            ->assertRedirect(route('login'));
+
+        $this->get(route('admin.users.index'))
+            ->assertRedirect(route('login'));
+
+        $this->patch(route('admin.users.role.update', $target), [
+            'role' => Role::SUPPORT->value,
+        ])->assertRedirect(route('login'));
+    }
+
+    public function test_read_only_users_cannot_change_roles(): void
+    {
+        $user = User::factory()->readOnly()->create();
+        $target = User::factory()->support()->create();
+
+        $this->actingAs($user)
+            ->patch(route('admin.users.role.update', $target), [
+                'role' => Role::SUPER_ADMIN->value,
+            ])
+            ->assertForbidden();
+    }
+
+    public function test_support_users_cannot_toggle_user_activity(): void
+    {
+        $user = User::factory()->support()->create();
+        $target = User::factory()->readOnly()->create();
+
+        $this->actingAs($user)
+            ->patch(route('admin.users.activity.update', $target), [
+                'active' => false,
+            ])
+            ->assertForbidden();
+    }
 }

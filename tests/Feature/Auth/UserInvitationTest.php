@@ -131,4 +131,31 @@ class UserInvitationTest extends TestCase
             'email' => 'invitee@example.com',
         ]);
     }
+
+    public function test_invitation_cannot_be_accepted_with_an_invalid_token(): void
+    {
+        $token = Str::random(64);
+        $invitation = UserInvitation::query()->create([
+            'email' => 'invitee@example.com',
+            'token_hash' => hash('sha256', $token),
+            'invited_by' => User::factory()->superAdmin()->create()->id,
+            'expires_at' => Carbon::now()->addDays(3),
+        ]);
+
+        $this->get(route('invitations.accept', [
+            'invitation' => $invitation,
+            'token' => 'invalid-token',
+        ]))->assertForbidden();
+
+        $this->post(route('invitations.activate', $invitation), [
+            'token' => 'invalid-token',
+            'name' => 'Invalid User',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+        ])->assertForbidden();
+
+        $this->assertDatabaseMissing('users', [
+            'email' => 'invitee@example.com',
+        ]);
+    }
 }
