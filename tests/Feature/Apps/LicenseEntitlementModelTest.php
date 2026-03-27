@@ -54,4 +54,27 @@ class LicenseEntitlementModelTest extends TestCase
             'feature_code' => 'export_pdf',
         ]);
     }
+
+    public function test_multiple_entitlements_persist_with_their_enabled_state(): void
+    {
+        $license = License::factory()->create();
+
+        LicenseEntitlement::factory()->create([
+            'license_id' => $license->id,
+            'feature_code' => 'offline_mode',
+            'enabled' => true,
+        ]);
+
+        LicenseEntitlement::factory()->create([
+            'license_id' => $license->id,
+            'feature_code' => 'priority_support',
+            'enabled' => false,
+        ]);
+
+        $entitlements = $license->fresh()->entitlements->keyBy('feature_code');
+
+        $this->assertCount(2, $entitlements);
+        $this->assertTrue($entitlements['offline_mode']->enabled);
+        $this->assertFalse($entitlements['priority_support']->enabled);
+    }
 }

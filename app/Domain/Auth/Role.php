@@ -30,4 +30,12 @@ enum Role: string
     {
         return $this === self::SUPER_ADMIN;
     }
+
+    public function canExportLicenses(): bool
+    {
+        return match ($this) {
+            self::SUPER_ADMIN, self::SUPPORT => true,
+            self::READ_ONLY => false,
+        };
+    }
 }

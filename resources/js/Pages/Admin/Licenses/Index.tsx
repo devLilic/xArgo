@@ -28,7 +28,7 @@ type Props = {
     filters: { license_key: string; customer_email: string; app_id: number | null; status: string };
     defaults: { maxDevices: number; graceHours: number };
     status?: string | null;
-    can: { create: boolean };
+    can: { create: boolean; export: boolean };
 };
 
 export default function LicensesIndex({ licenses, apps, plans, statuses, filters, defaults, status = null, can }: Props) {
@@ -96,6 +96,19 @@ export default function LicensesIndex({ licenses, apps, plans, statuses, filters
                                 <p className="mt-2 text-sm text-slate-600">Search, issue, review, suspend, revoke, and archive licenses across all managed apps.</p>
                             </div>
                             <div className="flex gap-3">
+                                {can.export ? (
+                                    <Link
+                                        href={route('admin.licenses.export', {
+                                            license_key: filterForm.data.license_key || undefined,
+                                            customer_email: filterForm.data.customer_email || undefined,
+                                            app_id: filterForm.data.app_id || undefined,
+                                            status: filterForm.data.status || undefined,
+                                        })}
+                                        className="inline-flex rounded-full border border-emerald-300 px-4 py-2 text-sm font-medium text-emerald-800 transition hover:border-emerald-500"
+                                    >
+                                        Export CSV
+                                    </Link>
+                                ) : null}
                                 <Link href={route('admin.plans.index')} className="inline-flex rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900">Manage plans</Link>
                                 <Link href={route('admin.dashboard')} className="inline-flex rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900">Back to dashboard</Link>
                             </div>

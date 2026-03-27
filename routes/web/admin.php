@@ -52,6 +52,9 @@ Route::patch('/plans/{plan}', [LicensePlanController::class, 'update'])
 Route::get('/licenses', [LicenseController::class, 'index'])
     ->name('licenses.index');
 
+Route::get('/licenses/export', [LicenseController::class, 'export'])
+    ->name('licenses.export');
+
 Route::post('/licenses', [LicenseController::class, 'store'])
     ->name('licenses.store');
 

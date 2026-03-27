@@ -22,6 +22,11 @@ class LicensePolicy
         return $user->role->canManageUsers();
     }
 
+    public function export(User $user): bool
+    {
+        return $user->role->canExportLicenses();
+    }
+
     public function update(User $user, License $license): bool
     {
         return $user->role->canManageUsers();

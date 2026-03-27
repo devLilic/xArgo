@@ -54,6 +54,7 @@ class LicenseManagementTest extends TestCase
                 ->has('licenses', 1)
                 ->where('licenses.0.id', $visibleLicense->id)
                 ->where('can.create', false)
+                ->where('can.export', true)
             );
 
         $this->actingAs($support)
@@ -205,6 +206,58 @@ class LicenseManagementTest extends TestCase
 
         $this->actingAs($support)
             ->patch(route('admin.licenses.restore', $license->id))
+            ->assertForbidden();
+    }
+
+    public function test_support_users_can_export_filtered_license_csv(): void
+    {
+        $support = User::factory()->support()->create();
+        $app = App::factory()->create(['name' => 'Desktop']);
+        $otherApp = App::factory()->create(['name' => 'Mobile']);
+        $plan = LicensePlan::factory()->create(['app_id' => $app->id, 'name' => 'Desktop Pro', 'code' => 'DESK-PRO']);
+        $otherPlan = LicensePlan::factory()->create(['app_id' => $otherApp->id, 'name' => 'Mobile Pro', 'code' => 'MOB-PRO']);
+
+        $exported = License::factory()->create([
+            'app_id' => $app->id,
+            'plan_id' => $plan->id,
+            'license_key' => 'XARGO-EXPT-1234-0001',
+            'customer_name' => 'Export User',
+            'customer_email' => 'export@example.com',
+            'status' => LicenseStatus::ACTIVE,
+        ]);
+
+        License::factory()->create([
+            'app_id' => $otherApp->id,
+            'plan_id' => $otherPlan->id,
+            'license_key' => 'XARGO-SKIP-1234-0002',
+            'customer_email' => 'skip@example.com',
+            'status' => LicenseStatus::SUSPENDED,
+        ]);
+
+        $response = $this->actingAs($support)
+            ->get(route('admin.licenses.export', [
+                'license_key' => 'EXPT',
+                'customer_email' => 'export@example.com',
+                'app_id' => $app->id,
+                'status' => LicenseStatus::ACTIVE->value,
+            ]));
+
+        $response->assertOk();
+        $response->assertHeader('content-type', 'text/csv; charset=UTF-8');
+        $content = $response->streamedContent();
+
+        $this->assertStringContainsString('license_key,public_key,customer_name,customer_email,app_name,app_id,plan_name,plan_code,status,max_devices,expires_at,grace_hours,last_validated_at,archived_at,created_at', $content);
+        $this->assertStringContainsString($exported->license_key, $content);
+        $this->assertStringContainsString('export@example.com', $content);
+        $this->assertStringNotContainsString('skip@example.com', $content);
+    }
+
+    public function test_read_only_users_cannot_export_license_csv(): void
+    {
+        $readOnly = User::factory()->readOnly()->create();
+
+        $this->actingAs($readOnly)
+            ->get(route('admin.licenses.export'))
             ->assertForbidden();
     }
 }

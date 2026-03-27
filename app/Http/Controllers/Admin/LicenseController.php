@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Actions\Audit\WriteAuditLogAction;
 use App\Actions\Licensing\CreateLicenseAction;
 use App\Actions\Licensing\TransitionLicenseStatusAction;
 use App\Actions\Licensing\UpdateLicenseAction;
@@ -18,6 +19,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class LicenseController extends Controller
 {
@@ -26,13 +28,7 @@ class LicenseController extends Controller
         $this->authorize('viewAny', License::class);
 
         return Inertia::render('Admin/Licenses/Index', [
-            'licenses' => License::query()
-                ->with(['app', 'plan'])
-                ->withTrashed()
-                ->when($request->string('license_key')->toString() !== '', fn (Builder $query) => $query->where('license_key', 'like', '%'.$request->string('license_key')->toString().'%'))
-                ->when($request->string('customer_email')->toString() !== '', fn (Builder $query) => $query->where('customer_email', 'like', '%'.$request->string('customer_email')->toString().'%'))
-                ->when($request->filled('app_id'), fn (Builder $query) => $query->where('app_id', $request->integer('app_id')))
-                ->when($request->string('status')->toString() !== '', fn (Builder $query) => $query->where('status', $request->string('status')->toString()))
+            'licenses' => $this->filteredLicenseQuery($request)
                 ->latest('id')
                 ->get()
                 ->map(fn (License $license): array => $this->presentLicense($license))
@@ -52,18 +48,87 @@ class LicenseController extends Controller
             ],
             'can' => [
                 'create' => $request->user()->can('create', License::class),
+                'export' => $request->user()->can('export', License::class),
             ],
             'status' => session('status'),
         ]);
     }
 
-    public function store(StoreLicenseRequest $request, CreateLicenseAction $createLicense): RedirectResponse
+    public function export(Request $request): StreamedResponse
+    {
+        $this->authorize('export', License::class);
+
+        $fileName = 'licenses-'.now()->format('Ymd-His').'.csv';
+
+        return response()->streamDownload(function () use ($request): void {
+            $handle = fopen('php://output', 'wb');
+
+            if ($handle === false) {
+                return;
+            }
+
+            fputcsv($handle, [
+                'license_key',
+                'public_key',
+                'customer_name',
+                'customer_email',
+                'app_name',
+                'app_id',
+                'plan_name',
+                'plan_code',
+                'status',
+                'max_devices',
+                'expires_at',
+                'grace_hours',
+                'last_validated_at',
+                'archived_at',
+                'created_at',
+            ]);
+
+            $this->filteredLicenseQuery($request)
+                ->latest('id')
+                ->chunk(200, function ($licenses) use ($handle): void {
+                    foreach ($licenses as $license) {
+                        fputcsv($handle, [
+                            $license->license_key,
+                            $license->public_key,
+                            $license->customer_name,
+                            $license->customer_email,
+                            $license->app->name,
+                            $license->app->app_id,
+                            $license->plan->name,
+                            $license->plan->code,
+                            $license->status->value,
+                            $license->max_devices,
+                            $license->expires_at?->toIso8601String(),
+                            $license->grace_hours,
+                            $license->last_validated_at?->toIso8601String(),
+                            $license->deleted_at?->toIso8601String(),
+                            $license->created_at?->toIso8601String(),
+                        ]);
+                    }
+                });
+
+            fclose($handle);
+        }, $fileName, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
+    }
+
+    public function store(
+        StoreLicenseRequest $request,
+        CreateLicenseAction $createLicense,
+        WriteAuditLogAction $writeAuditLog,
+    ): RedirectResponse
     {
         $this->authorize('create', License::class);
 
         $plan = LicensePlan::query()->findOrFail($request->integer('plan_id'));
 
         $license = $createLicense->execute($plan, $request->validated());
+        $this->writeLicenseAuditLog($writeAuditLog, $request, 'admin.license.created', $license, [
+            'created_status' => $license->status->value,
+        ]);
 
         return redirect()
             ->route('admin.licenses.show', $license->id)
@@ -96,24 +161,50 @@ class LicenseController extends Controller
         ]);
     }
 
-    public function update(UpdateLicenseRequest $request, int $license, UpdateLicenseAction $updateLicense): RedirectResponse
+    public function update(
+        UpdateLicenseRequest $request,
+        int $license,
+        UpdateLicenseAction $updateLicense,
+        WriteAuditLogAction $writeAuditLog,
+    ): RedirectResponse
     {
         $license = $this->findManagedLicense($license);
         $this->authorize('update', $license);
 
+        $before = $this->licenseAuditSnapshot($license);
         $updateLicense->execute($license, $request->validated());
+        $updatedLicense = $license->fresh(['app', 'plan']);
+        $this->writeLicenseAuditLog($writeAuditLog, $request, 'admin.license.updated', $updatedLicense, [
+            'before' => $before,
+            'after' => $this->licenseAuditSnapshot($updatedLicense),
+        ]);
 
         return redirect()
             ->route('admin.licenses.edit', $license->id)
             ->with('status', 'License updated.');
     }
 
-    public function updateStatus(UpdateLicenseStatusRequest $request, int $license, TransitionLicenseStatusAction $transitionStatus): RedirectResponse
+    public function updateStatus(
+        UpdateLicenseStatusRequest $request,
+        int $license,
+        TransitionLicenseStatusAction $transitionStatus,
+        WriteAuditLogAction $writeAuditLog,
+    ): RedirectResponse
     {
         $license = $this->findManagedLicense($license);
         $this->authorize('changeStatus', $license);
 
-        $transitionStatus->execute($license, $request->string('status_action')->toString());
+        $previousStatus = $license->status->value;
+        $updatedLicense = $transitionStatus->execute($license, $request->string('status_action')->toString());
+        $event = match ($request->string('status_action')->toString()) {
+            'suspend' => 'admin.license.suspended',
+            'revoke' => 'admin.license.revoked',
+            'reactivate' => 'admin.license.reactivated',
+        };
+        $this->writeLicenseAuditLog($writeAuditLog, $request, $event, $updatedLicense, [
+            'before_status' => $previousStatus,
+            'after_status' => $updatedLicense->status->value,
+        ]);
 
         return redirect()
             ->route('admin.licenses.show', $license->id)
@@ -132,12 +223,16 @@ class LicenseController extends Controller
             ->with('status', 'License archived.');
     }
 
-    public function restore(Request $request, int $license): RedirectResponse
+    public function restore(Request $request, int $license, WriteAuditLogAction $writeAuditLog): RedirectResponse
     {
         $license = $this->findManagedLicense($license);
         $this->authorize('restore', $license);
 
         $license->restore();
+        $restoredLicense = $license->fresh(['app', 'plan']);
+        $this->writeLicenseAuditLog($writeAuditLog, $request, 'admin.license.restored', $restoredLicense, [
+            'restored_from_archived' => true,
+        ]);
 
         return redirect()
             ->route('admin.licenses.show', $license->id)
@@ -146,10 +241,24 @@ class LicenseController extends Controller
 
     private function findManagedLicense(int $licenseId): License
     {
+        return $this->baseLicenseQuery()
+            ->findOrFail($licenseId);
+    }
+
+    private function filteredLicenseQuery(Request $request): Builder
+    {
+        return $this->baseLicenseQuery()
+            ->when($request->string('license_key')->toString() !== '', fn (Builder $query) => $query->where('license_key', 'like', '%'.$request->string('license_key')->toString().'%'))
+            ->when($request->string('customer_email')->toString() !== '', fn (Builder $query) => $query->where('customer_email', 'like', '%'.$request->string('customer_email')->toString().'%'))
+            ->when($request->filled('app_id'), fn (Builder $query) => $query->where('app_id', $request->integer('app_id')))
+            ->when($request->string('status')->toString() !== '', fn (Builder $query) => $query->where('status', $request->string('status')->toString()));
+    }
+
+    private function baseLicenseQuery(): Builder
+    {
         return License::query()
             ->with(['app', 'plan'])
-            ->withTrashed()
-            ->findOrFail($licenseId);
+            ->withTrashed();
     }
 
     private function presentLicense(License $license): array
@@ -228,6 +337,38 @@ class LicenseController extends Controller
             'changeStatus' => $request->user()->can('changeStatus', $license),
             'delete' => $request->user()->can('delete', $license) && ! $license->trashed(),
             'restore' => $request->user()->can('restore', $license) && $license->trashed(),
+        ];
+    }
+
+    private function writeLicenseAuditLog(
+        WriteAuditLogAction $writeAuditLog,
+        Request $request,
+        string $event,
+        License $license,
+        array $metadata = [],
+    ): void {
+        $writeAuditLog->execute(
+            $request->user(),
+            $event,
+            'license',
+            $license->id,
+            array_merge($this->licenseAuditSnapshot($license), $metadata),
+        );
+    }
+
+    private function licenseAuditSnapshot(License $license): array
+    {
+        return [
+            'license_key' => $license->license_key,
+            'public_key' => $license->public_key,
+            'customer_email' => $license->customer_email,
+            'app_id' => $license->app_id,
+            'plan_id' => $license->plan_id,
+            'status' => $license->status->value,
+            'max_devices' => $license->max_devices,
+            'expires_at' => $license->expires_at?->toIso8601String(),
+            'grace_hours' => $license->grace_hours,
+            'archived_at' => $license->deleted_at?->toIso8601String(),
         ];
     }
 }
