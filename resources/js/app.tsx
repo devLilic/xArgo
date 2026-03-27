@@ -3,6 +3,7 @@ import '../css/app.css';
 
 import { createInertiaApp } from '@inertiajs/react';
 import { createRoot } from 'react-dom/client';
+import type { ComponentType } from 'react';
 
 const appName = import.meta.env.VITE_APP_NAME ?? 'xArgo';
 const pages = import.meta.glob('./Pages/**/*.{jsx,tsx}');
@@ -16,9 +17,11 @@ createInertiaApp({
             throw new Error(`Page not found: ${name}`);
         }
 
-        const module = await page();
+        const pageModule = (await page()) as {
+            default: ComponentType;
+        };
 
-        return 'default' in module ? module.default : module;
+        return pageModule.default;
     },
     setup({ el, App, props }) {
         createRoot(el).render(<App {...props} />);

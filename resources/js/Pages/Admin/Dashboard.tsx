@@ -27,7 +27,9 @@ export default function Dashboard({
 
         form.transform(() => ({
             email: emailValue,
-        })).post(route('admin.invitations.store'), {
+        }));
+
+        form.post(route('admin.invitations.store'), {
             preserveScroll: true,
             onSuccess: () => {
                 setEmailValue('');
