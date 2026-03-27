@@ -1,58 +1,260 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# xArgo Licensing Server
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Internal licensing backend and admin panel for multiple Electron applications.
 
-## About Laravel
+## Purpose
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+This project provides:
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- a public licensing API for Electron apps
+- an internal admin panel for support and operations
+- license management for permanent, subscription, and trial plans
+- device-bound activation tracking with non-destructive anti-clone handling
+- shared-hosting-friendly backend behavior from the start
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Stack
 
-## Learning Laravel
+- Laravel 13
+- MySQL
+- Inertia
+- React + TypeScript
+- Vite
+- Tailwind CSS
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Local setup
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Primary local development guide:
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+- [docs/laragon-local-development.md](docs/laragon-local-development.md)
+- API contract reference: [docs/api-contract.md](docs/api-contract.md)
+- Shared hosting deployment notes: [docs/shared-hosting-deployment.md](docs/shared-hosting-deployment.md)
 
-## Agentic Development
+Schema and deployment notes:
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+- [docs/deployment-schema.md](docs/deployment-schema.md)
+
+Quick start:
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+composer install
+npm install
+copy .env.example .env
+php artisan key:generate
+php artisan migrate --force
+php artisan serve
+npm run dev
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+## Environment variables
 
-## Contributing
+Core local variables:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```env
+APP_NAME=xArgo
+APP_ENV=local
+APP_URL=http://xargo.test
 
-## Code of Conduct
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=xargo
+DB_USERNAME=xargo
+DB_PASSWORD=xargo
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+QUEUE_CONNECTION=database
+SESSION_DRIVER=database
+CACHE_STORE=database
+MAIL_MAILER=log
+```
 
-## Security Vulnerabilities
+Licensing-specific variables:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```env
+AUTH_INVITATION_EXPIRE_HOURS=72
 
-## License
+LICENSING_LICENSE_KEY_PREFIX=XARGO
+LICENSING_PUBLIC_KEY_PREFIX=lic_
+LICENSING_DEFAULT_MAX_DEVICES=1
+LICENSING_HEARTBEAT_INTERVAL_SECONDS=3600
+LICENSING_STALE_DEVICE_THRESHOLD_SECONDS=3600
+LICENSING_HEARTBEAT_RETENTION_DAYS=3
+LICENSING_DEVICE_MISMATCH_GRACE_PERIOD_SECONDS=300
+LICENSING_DEVICE_MISMATCH_BLOCK_REASON_CODE=device_mismatch
+LICENSING_API_RATE_LIMIT_PER_MINUTE=120
+LICENSING_EXPIRY_WARNING_DAYS=7
+LICENSING_TRIAL_ENDING_WARNING_DAYS=3
+LICENSING_DEVICE_MISMATCH_ALERTS_ENABLED=true
+LICENSING_REBIND_NOTIFICATIONS_ENABLED=true
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Infrastructure defaults are intentionally shared-hosting-friendly:
+
+```env
+INFRASTRUCTURE_SHARED_HOSTING_COMPATIBLE=true
+INFRASTRUCTURE_SCHEDULER_DRIVER=cron
+INFRASTRUCTURE_REQUIRES_SUPERVISOR=false
+INFRASTRUCTURE_REQUIRES_LONG_RUNNING_PROCESSES=false
+INFRASTRUCTURE_QUEUE_FALLBACK_CONNECTION=sync
+INFRASTRUCTURE_REQUIRES_WEBSOCKETS=false
+INFRASTRUCTURE_REQUIRES_REDIS=false
+```
+
+## Migrations
+
+The backend schema is expected to be fully bootstrapped from migrations.
+
+Run standard migration:
+
+```bash
+php artisan migrate --force
+```
+
+Run a clean rebuild:
+
+```bash
+php artisan migrate:fresh --force
+```
+
+Current core domain tables include:
+
+- `apps`
+- `license_plans`
+- `licenses`
+- `license_entitlements`
+- `license_activations`
+- `license_heartbeats`
+- `admin_audit_logs`
+- `user_invitations`
+
+Supporting Laravel tables include users, sessions, cache, jobs, and password reset tokens.
+
+## Testing and TDD
+
+The backend follows TDD-oriented module work:
+
+- feature tests for business flows through Laravel
+- unit tests for service and policy logic
+- thin controllers with business logic in services/actions
+
+Run all tests:
+
+```bash
+php artisan test
+```
+
+Useful checks:
+
+```bash
+npx tsc --noEmit
+php artisan route:list
+```
+
+The test suite is configured for a separate MySQL database (`xargo_test`) in `phpunit.xml`.
+
+## Auth model
+
+Authentication is internal-team only:
+
+- email + password login
+- password reset
+- no public self-registration
+- invitation-based onboarding for internal users
+
+Invited users receive an expiring invitation link and set their password during activation.
+
+## Roles
+
+Current internal roles:
+
+- `super_admin`
+- `support`
+- `read_only`
+
+High-level access model:
+
+- `super_admin`: full admin write access
+- `support`: operational read access plus selected actions such as invitations and CSV export
+- `read_only`: read access to internal areas without privileged mutations
+
+## Admin panel overview
+
+The internal admin panel currently covers:
+
+- dashboard operational summaries
+- internal user management
+- invitations
+- app and plan management
+- license management
+- activation visibility and manual rebind
+- heartbeat visibility
+- audit log visibility
+- internal search by license key, customer email, app ID, machine ID, and installation ID where relevant
+
+## API overview
+
+Public API routes:
+
+- `POST /api/v1/licenses/activate`
+- `POST /api/v1/licenses/validate`
+- `POST /api/v1/licenses/heartbeat`
+- `POST /api/v1/licenses/rebind/request`
+- `POST /api/v1/licenses/rebind/confirm`
+
+Common payload fields across licensing flows:
+
+- `licenseKey`
+- `activationToken` where applicable
+- `appId`
+- `appVersion`
+- `machineId`
+- `installationId`
+
+Behavior notes:
+
+- responses use a standardized success/error envelope
+- licensing endpoints are rate-limited
+- core licensing logic runs in normal request-response mode
+
+## Heartbeat retention behavior
+
+Heartbeat design:
+
+- expected interval: 1 hour
+- activation becomes stale/inactive after 1 hour without heartbeat logic coverage
+- heartbeat records are retained for the last 3 days
+
+Cleanup is handled by a cron-friendly scheduled command, not by a long-running worker.
+
+## Non-destructive anti-clone rule
+
+The anti-clone behavior is explicit and non-destructive:
+
+- the bound `machineId + installationId` pair remains the legitimate activation
+- a copied install on a different device receives `device_mismatch`
+- mismatch receives a short grace window, then blocks
+- the original activation is not automatically invalidated
+- the system does not auto-rebind to the new device
+
+## Manual rebind rule
+
+Rebinding is intentional and manual:
+
+- support can review activation context
+- rebind is confirmed through internal admin flow
+- rebind changes the bound device only when explicitly performed by staff
+- rebind actions are audited
+- public API rebind endpoints do not automatically take over an activation
+
+## Shared-hosting compatibility
+
+The backend is designed to remain deployable on shared hosting:
+
+- no Redis requirement
+- no Supervisor requirement
+- no WebSockets requirement
+- no long-running workers required for core flows
+- queue usage is compatible with database queue or sync fallback
+- scheduler tasks are cron-friendly
+- emails and cleanup are auxiliary behavior, not required for core license validation
+
+Business-critical licensing operations continue to work in standard synchronous request-response mode.
