@@ -10,6 +10,8 @@ class DashboardController extends Controller
 {
     public function __invoke(): Response
     {
+        $this->authorize('viewAdminPanel', request()->user());
+
         return Inertia::render('Admin/Dashboard', [
             'appName' => config('app.name'),
             'environment' => app()->environment(),
@@ -17,6 +19,7 @@ class DashboardController extends Controller
             'user' => request()->user()?->only([
                 'name',
                 'email',
+                'role',
             ]),
         ]);
     }

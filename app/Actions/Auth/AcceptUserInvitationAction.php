@@ -4,6 +4,7 @@ namespace App\Actions\Auth;
 
 use App\Models\User;
 use App\Models\UserInvitation;
+use App\Domain\Auth\Role;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 
@@ -24,6 +25,7 @@ class AcceptUserInvitationAction
                 'email' => $invitation->email,
                 'password' => $attributes['password'],
                 'email_verified_at' => now(),
+                'role' => Role::READ_ONLY,
             ]);
 
             $invitation->forceFill([

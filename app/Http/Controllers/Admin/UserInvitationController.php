@@ -11,6 +11,8 @@ class UserInvitationController extends Controller
 {
     public function store(StoreUserInvitationRequest $request, CreateUserInvitationAction $createUserInvitation): RedirectResponse
     {
+        $this->authorize('create', \App\Models\UserInvitation::class);
+
         $createUserInvitation->execute(
             $request->user(),
             $request->string('email')->toString(),

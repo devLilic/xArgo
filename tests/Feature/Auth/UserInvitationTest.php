@@ -21,7 +21,7 @@ class UserInvitationTest extends TestCase
     {
         Notification::fake();
 
-        $admin = User::factory()->create();
+        $admin = User::factory()->superAdmin()->create();
 
         $response = $this->actingAs($admin)->post(route('admin.invitations.store'), [
             'email' => 'invitee@example.com',
@@ -55,7 +55,7 @@ class UserInvitationTest extends TestCase
         $invitation = UserInvitation::query()->create([
             'email' => 'invitee@example.com',
             'token_hash' => hash('sha256', $token),
-            'invited_by' => User::factory()->create()->id,
+            'invited_by' => User::factory()->superAdmin()->create()->id,
             'expires_at' => Carbon::now()->addDays(3),
         ]);
 
@@ -79,7 +79,7 @@ class UserInvitationTest extends TestCase
         $invitation = UserInvitation::query()->create([
             'email' => 'invitee@example.com',
             'token_hash' => hash('sha256', $token),
-            'invited_by' => User::factory()->create()->id,
+            'invited_by' => User::factory()->superAdmin()->create()->id,
             'expires_at' => Carbon::now()->addDays(3),
         ]);
 
@@ -98,6 +98,7 @@ class UserInvitationTest extends TestCase
         $this->assertSame('Invited User', $user->name);
         $this->assertTrue(Hash::check('password', $user->password));
         $this->assertNotNull($user->email_verified_at);
+        $this->assertSame('read_only', $user->role->value);
         $this->assertAuthenticatedAs($user);
 
         $this->assertNotNull($invitation->fresh()->accepted_at);
@@ -110,7 +111,7 @@ class UserInvitationTest extends TestCase
         $invitation = UserInvitation::query()->create([
             'email' => 'invitee@example.com',
             'token_hash' => hash('sha256', $token),
-            'invited_by' => User::factory()->create()->id,
+            'invited_by' => User::factory()->superAdmin()->create()->id,
             'expires_at' => Carbon::now()->subMinute(),
         ]);
 
