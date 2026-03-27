@@ -31,4 +31,9 @@ class App extends Model
     {
         return $this->hasMany(LicensePlan::class);
     }
+
+    public function licenses(): HasMany
+    {
+        return $this->hasMany(License::class);
+    }
 }
