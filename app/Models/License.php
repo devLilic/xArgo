@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
@@ -48,5 +49,10 @@ class License extends Model
     public function plan(): BelongsTo
     {
         return $this->belongsTo(LicensePlan::class, 'plan_id');
+    }
+
+    public function entitlements(): HasMany
+    {
+        return $this->hasMany(LicenseEntitlement::class);
     }
 }
