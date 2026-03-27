@@ -2,6 +2,7 @@
 
 namespace App\Services\Licensing;
 
+use App\Domain\Licensing\LicenseReasonCode;
 use App\Models\LicenseActivation;
 use App\Support\Licensing\AntiCloneDecision;
 use Carbon\CarbonInterface;
@@ -25,7 +26,10 @@ class AntiClonePolicyService
         }
 
         $evaluatedAt = $now ?? now();
-        $reasonCode = (string) config('licensing.device_mismatch.block_reason_code');
+        $reasonCode = (string) config(
+            'licensing.device_mismatch.block_reason_code',
+            LicenseReasonCode::DEVICE_MISMATCH
+        );
         $configuredGraceUntil = $activation->grace_until;
 
         if ($configuredGraceUntil === null) {

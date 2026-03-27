@@ -17,4 +17,8 @@ return [
         'grace_period_seconds' => (int) env('LICENSING_DEVICE_MISMATCH_GRACE_PERIOD_SECONDS', 300),
         'block_reason_code' => env('LICENSING_DEVICE_MISMATCH_BLOCK_REASON_CODE', 'device_mismatch'),
     ],
+
+    'api' => [
+        'rate_limit_per_minute' => (int) env('LICENSING_API_RATE_LIMIT_PER_MINUTE', 120),
+    ],
 ];

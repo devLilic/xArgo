@@ -39,14 +39,21 @@ class ApplicationBootstrapTest extends TestCase
 
         $response
             ->assertOk()
-            ->assertJsonPath('ok', true)
-            ->assertJsonPath('app', config('app.name'));
+            ->assertJsonPath('status', 'success')
+            ->assertJsonPath('data.ok', true)
+            ->assertJsonPath('data.app', config('app.name'))
+            ->assertJsonPath('error', null);
     }
 
     public function test_route_names_are_scoped_for_admin_and_api_v1(): void
     {
         $this->assertSame('/', route('admin.dashboard', absolute: false));
         $this->assertSame('/api/v1/licenses/ping', route('api.v1.licenses.ping', absolute: false));
+        $this->assertSame('/api/v1/licenses/activate', route('api.v1.licenses.activate', absolute: false));
+        $this->assertSame('/api/v1/licenses/validate', route('api.v1.licenses.validate', absolute: false));
+        $this->assertSame('/api/v1/licenses/heartbeat', route('api.v1.licenses.heartbeat', absolute: false));
+        $this->assertSame('/api/v1/licenses/rebind/request', route('api.v1.licenses.rebind.request', absolute: false));
+        $this->assertSame('/api/v1/licenses/rebind/confirm', route('api.v1.licenses.rebind.confirm', absolute: false));
         $this->assertSame('/login', route('login', absolute: false));
         $this->assertSame('/forgot-password', route('password.request', absolute: false));
     }

@@ -16,7 +16,10 @@ use App\Policies\LicenseHeartbeatPolicy;
 use App\Policies\LicensePlanPolicy;
 use App\Policies\UserInvitationPolicy;
 use App\Policies\UserPolicy;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 
@@ -35,6 +38,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        RateLimiter::for('licensing-api', function (Request $request) {
+            return Limit::perMinute((int) config('licensing.api.rate_limit_per_minute'))
+                ->by(implode('|', array_filter([
+                    'licensing-api',
+                    $request->ip(),
+                    $request->route()?->getName(),
+                ])));
+        });
+
         Gate::policy(App::class, AppPolicy::class);
         Gate::policy(License::class, LicensePolicy::class);
         Gate::policy(LicenseActivation::class, LicenseActivationPolicy::class);
