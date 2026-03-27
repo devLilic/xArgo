@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Auth\UserInvitationAcceptanceController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function (): void {
@@ -22,6 +23,12 @@ Route::middleware('guest')->group(function (): void {
 
     Route::post('/reset-password', [NewPasswordController::class, 'store'])
         ->name('password.store');
+
+    Route::get('/invitations/{invitation}/accept/{token}', [UserInvitationAcceptanceController::class, 'create'])
+        ->name('invitations.accept');
+
+    Route::post('/invitations/{invitation}/accept', [UserInvitationAcceptanceController::class, 'store'])
+        ->name('invitations.activate');
 });
 
 Route::middleware('auth')->group(function (): void {

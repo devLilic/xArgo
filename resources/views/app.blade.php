@@ -6,7 +6,7 @@
         <title inertia>{{ config('app.name', 'xArgo') }}</title>
         @routes
         @viteReactRefresh
-        @vite(['resources/css/app.css', 'resources/js/app.jsx'])
+        @vite(['resources/css/app.css', 'resources/js/app.tsx'])
         @inertiaHead
     </head>
     <body class="antialiased">

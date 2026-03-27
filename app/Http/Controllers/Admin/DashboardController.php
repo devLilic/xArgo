@@ -13,6 +13,7 @@ class DashboardController extends Controller
         return Inertia::render('Admin/Dashboard', [
             'appName' => config('app.name'),
             'environment' => app()->environment(),
+            'invitationStatus' => session('status'),
             'user' => request()->user()?->only([
                 'name',
                 'email',
