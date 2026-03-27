@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Actions\Audit\WriteAuditLogAction;
 use App\Domain\Auth\Role;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateUserActivityRequest;
@@ -51,20 +52,43 @@ class UserController extends Controller
         ]);
     }
 
-    public function updateRole(UpdateUserRoleRequest $request, User $user): RedirectResponse
+    public function updateRole(
+        UpdateUserRoleRequest $request,
+        User $user,
+        WriteAuditLogAction $writeAuditLog,
+    ): RedirectResponse
     {
         $this->authorize('updateRole', $user);
 
+        $previousRole = $user->role;
+        $newRole = Role::from($request->string('role')->toString());
+
         $user->forceFill([
-            'role' => Role::from($request->string('role')->toString()),
+            'role' => $newRole,
         ])->save();
+
+        $writeAuditLog->execute(
+            $request->user(),
+            'admin.user.role_changed',
+            'user',
+            $user->id,
+            [
+                'from' => $previousRole->value,
+                'to' => $newRole->value,
+                'email' => $user->email,
+            ],
+        );
 
         return redirect()
             ->route('admin.users.show', $user)
             ->with('status', 'User role updated.');
     }
 
-    public function updateActivity(UpdateUserActivityRequest $request, User $user): RedirectResponse
+    public function updateActivity(
+        UpdateUserActivityRequest $request,
+        User $user,
+        WriteAuditLogAction $writeAuditLog,
+    ): RedirectResponse
     {
         $this->authorize('toggleActive', $user);
 
@@ -73,6 +97,17 @@ class UserController extends Controller
         $user->forceFill([
             'deactivated_at' => $active ? null : now(),
         ])->save();
+
+        $writeAuditLog->execute(
+            $request->user(),
+            $active ? 'admin.user.reactivated' : 'admin.user.deactivated',
+            'user',
+            $user->id,
+            [
+                'email' => $user->email,
+                'active' => $active,
+            ],
+        );
 
         return redirect()
             ->route('admin.users.show', $user)
