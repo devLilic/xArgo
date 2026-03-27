@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
@@ -41,6 +42,11 @@ class LicenseActivation extends Model
     public function license(): BelongsTo
     {
         return $this->belongsTo(License::class);
+    }
+
+    public function heartbeats(): HasMany
+    {
+        return $this->hasMany(LicenseHeartbeat::class, 'license_activation_id');
     }
 
     public function matchesActivationToken(string $token): bool

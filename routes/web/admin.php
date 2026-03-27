@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\AppController;
 use App\Http\Controllers\Admin\LicenseActivationController;
 use App\Http\Controllers\Admin\LicenseController;
+use App\Http\Controllers\Admin\LicenseHeartbeatController;
 use App\Http\Controllers\Admin\LicensePlanController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UserInvitationController;
@@ -82,6 +83,9 @@ Route::get('/activations', [LicenseActivationController::class, 'index'])
 
 Route::get('/activations/{activation}', [LicenseActivationController::class, 'show'])
     ->name('activations.show');
+
+Route::get('/heartbeats', [LicenseHeartbeatController::class, 'index'])
+    ->name('heartbeats.index');
 
 Route::get('/licenses/{license}/activations/{activation}/rebind', [LicenseActivationController::class, 'edit'])
     ->name('licenses.activations.rebind.edit');

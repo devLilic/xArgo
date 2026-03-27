@@ -11,6 +11,7 @@ type DashboardProps = {
         viewApps: boolean;
         viewPlans: boolean;
         viewLicenses: boolean;
+        viewHeartbeats: boolean;
     };
     user?: {
         name: string;
@@ -126,6 +127,14 @@ export default function Dashboard({
                                             className="mr-3 inline-flex rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white transition hover:border-white/30"
                                         >
                                             Manage licenses
+                                        </Link>
+                                    ) : null}
+                                    {can.viewHeartbeats ? (
+                                        <Link
+                                            href={route('admin.heartbeats.index')}
+                                            className="mr-3 inline-flex rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white transition hover:border-white/30"
+                                        >
+                                            View heartbeats
                                         </Link>
                                     ) : null}
                                     <Link
