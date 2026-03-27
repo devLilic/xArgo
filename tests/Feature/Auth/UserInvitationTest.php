@@ -2,13 +2,13 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Jobs\SendInvitationMailJob;
 use App\Models\User;
 use App\Models\UserInvitation;
-use App\Notifications\UserInvitationNotification;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia;
 use Tests\TestCase;
@@ -19,7 +19,7 @@ class UserInvitationTest extends TestCase
 
     public function test_authenticated_admin_can_send_an_invitation_by_email(): void
     {
-        Notification::fake();
+        Bus::fake();
 
         $admin = User::factory()->superAdmin()->create();
 
@@ -38,13 +38,7 @@ class UserInvitationTest extends TestCase
         $this->assertTrue($invitation->isPending());
         $this->assertTrue($invitation->expires_at->isFuture());
 
-        Notification::assertSentOnDemand(UserInvitationNotification::class, function (UserInvitationNotification $notification, array $channels, object $notifiable) use ($invitation): bool {
-            $mail = $notification->toMail($notifiable);
-
-            return in_array('mail', $channels, true)
-                && $notifiable->routes['mail'] === 'invitee@example.com'
-                && str_contains($mail->actionUrl, (string) $invitation->id);
-        });
+        Bus::assertDispatchedAfterResponse(SendInvitationMailJob::class);
     }
 
     public function test_invited_user_can_view_the_acceptance_screen(): void

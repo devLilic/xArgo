@@ -21,4 +21,19 @@ return [
     'api' => [
         'rate_limit_per_minute' => (int) env('LICENSING_API_RATE_LIMIT_PER_MINUTE', 120),
     ],
+
+    'notifications' => [
+        'expiry_warning_days' => (int) env('LICENSING_EXPIRY_WARNING_DAYS', 7),
+        'trial_ending_warning_days' => (int) env('LICENSING_TRIAL_ENDING_WARNING_DAYS', 3),
+        'device_mismatch_alerts_enabled' => filter_var(
+            env('LICENSING_DEVICE_MISMATCH_ALERTS_ENABLED', true),
+            FILTER_VALIDATE_BOOL,
+            FILTER_NULL_ON_FAILURE,
+        ) ?? true,
+        'rebind_notifications_enabled' => filter_var(
+            env('LICENSING_REBIND_NOTIFICATIONS_ENABLED', true),
+            FILTER_VALIDATE_BOOL,
+            FILTER_NULL_ON_FAILURE,
+        ) ?? true,
+    ],
 ];

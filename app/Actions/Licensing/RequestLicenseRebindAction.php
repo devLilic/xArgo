@@ -7,6 +7,7 @@ use App\Domain\Licensing\LicenseStatus;
 use App\Models\License;
 use App\Models\LicenseActivation;
 use App\Services\Licensing\AntiClonePolicyService;
+use App\Services\Licensing\LicenseNotificationService;
 use App\Support\Licensing\RebindRequestResult;
 use Illuminate\Validation\ValidationException;
 
@@ -14,6 +15,7 @@ class RequestLicenseRebindAction
 {
     public function __construct(
         private readonly AntiClonePolicyService $antiClonePolicy,
+        private readonly LicenseNotificationService $notifications,
     ) {
     }
 
@@ -56,6 +58,13 @@ class RequestLicenseRebindAction
             'grace_until' => $decision->graceUntil,
             'last_reason_code' => $decision->reasonCode,
         ]);
+
+        $this->notifications->queueRebindRequested(
+            activation: $activation->fresh(['license.app']),
+            requestedMachineId: $payload['machineId'],
+            requestedInstallationId: $payload['installationId'],
+            graceUntil: $decision->graceUntil,
+        );
 
         return new RebindRequestResult(
             requested: true,

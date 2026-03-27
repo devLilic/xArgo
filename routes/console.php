@@ -1,5 +1,6 @@
 <?php
 
+use App\Services\Licensing\LicenseNotificationService;
 use App\Actions\Licensing\PruneLicenseHeartbeatsAction;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -16,3 +17,15 @@ Artisan::command('licensing:prune-heartbeats', function (PruneLicenseHeartbeatsA
 
     return Command::SUCCESS;
 })->purpose('Prune license heartbeat records older than the configured retention window');
+
+Artisan::command('licensing:send-notifications', function (LicenseNotificationService $notifications): int {
+    $counts = $notifications->sendUpcomingWarnings();
+
+    $this->info(sprintf(
+        'Sent %d expiry warning notification(s) and %d trial ending notification(s).',
+        $counts['expiryWarnings'],
+        $counts['trialEndingWarnings'],
+    ));
+
+    return Command::SUCCESS;
+})->purpose('Send scheduled license expiry and trial ending notifications');

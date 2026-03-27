@@ -19,6 +19,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withSchedule(function (Schedule $schedule): void {
         $schedule->command('licensing:prune-heartbeats')
             ->dailyAt('02:00');
+
+        $schedule->command('licensing:send-notifications')
+            ->dailyAt('03:00');
     })
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [

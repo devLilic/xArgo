@@ -4,13 +4,17 @@ namespace App\Actions\Auth;
 
 use App\Models\User;
 use App\Models\UserInvitation;
-use App\Notifications\UserInvitationNotification;
+use App\Services\Licensing\LicenseNotificationService;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 
 class CreateUserInvitationAction
 {
+    public function __construct(
+        private readonly LicenseNotificationService $notifications,
+    ) {
+    }
+
     public function execute(User $inviter, string $email): UserInvitation
     {
         UserInvitation::query()
@@ -27,8 +31,7 @@ class CreateUserInvitationAction
             'expires_at' => Carbon::now()->addHours(config('auth.invitations.expire_hours')),
         ]);
 
-        Notification::route('mail', $email)
-            ->notify(new UserInvitationNotification($invitation, $plainToken));
+        $this->notifications->queueInvitation($invitation, $plainToken);
 
         return $invitation;
     }

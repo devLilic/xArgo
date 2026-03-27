@@ -8,6 +8,7 @@ use App\Models\License;
 use App\Models\LicenseActivation;
 use App\Services\Licensing\AntiClonePolicyService;
 use App\Services\Licensing\LicenseActivationService;
+use App\Services\Licensing\LicenseNotificationService;
 use App\Support\Licensing\ActivateLicenseResult;
 use Illuminate\Validation\ValidationException;
 
@@ -16,6 +17,7 @@ class ActivateLicenseAction
     public function __construct(
         private readonly LicenseActivationService $activationService,
         private readonly AntiClonePolicyService $antiClonePolicy,
+        private readonly LicenseNotificationService $notifications,
     ) {
     }
 
@@ -109,11 +111,23 @@ class ActivateLicenseAction
             $payload['machineId'],
             $payload['installationId'],
         );
+        $previousReasonCode = $boundActivation->last_reason_code;
 
         $boundActivation->update([
             'grace_until' => $decision->graceUntil,
             'last_reason_code' => $decision->reasonCode,
         ]);
+
+        if ($decision->reasonCode === LicenseReasonCode::DEVICE_MISMATCH
+            && $previousReasonCode !== LicenseReasonCode::DEVICE_MISMATCH) {
+            $this->notifications->queueDeviceMismatchAlert(
+                activation: $boundActivation->fresh(['license.app']),
+                machineId: $payload['machineId'],
+                installationId: $payload['installationId'],
+                reasonCode: $decision->reasonCode,
+                graceUntil: $decision->graceUntil,
+            );
+        }
 
         return new ActivateLicenseResult(
             activationId: $boundActivation->activation_id,

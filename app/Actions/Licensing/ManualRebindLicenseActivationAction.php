@@ -4,9 +4,15 @@ namespace App\Actions\Licensing;
 
 use App\Domain\Licensing\LicenseActivationStatus;
 use App\Models\LicenseActivation;
+use App\Services\Licensing\LicenseNotificationService;
 
 class ManualRebindLicenseActivationAction
 {
+    public function __construct(
+        private readonly LicenseNotificationService $notifications,
+    ) {
+    }
+
     /**
      * @param  array{machine_id:string,installation_id:string,device_label:?string}  $attributes
      */
@@ -25,6 +31,10 @@ class ManualRebindLicenseActivationAction
             'last_reason_code' => null,
         ]);
 
-        return $activation->fresh();
+        $reboundActivation = $activation->fresh(['license.app']);
+
+        $this->notifications->queueRebindConfirmed($reboundActivation);
+
+        return $reboundActivation;
     }
 }
