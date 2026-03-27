@@ -44,6 +44,35 @@ class AppAndPlanManagementTest extends TestCase
             );
     }
 
+    public function test_support_users_can_view_app_and_plan_edit_pages_but_not_update(): void
+    {
+        $this->withoutVite();
+
+        $support = User::factory()->support()->create();
+        $app = App::factory()->create();
+        $plan = LicensePlan::factory()->create([
+            'app_id' => $app->id,
+        ]);
+
+        $this->actingAs($support)
+            ->get(route('admin.apps.edit', $app))
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Admin/Apps/Edit')
+                ->where('managedApp.id', $app->id)
+                ->where('can.update', false)
+            );
+
+        $this->actingAs($support)
+            ->get(route('admin.plans.edit', $plan))
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Admin/Plans/Edit')
+                ->where('managedPlan.id', $plan->id)
+                ->where('can.update', false)
+            );
+    }
+
     public function test_super_admin_can_create_and_edit_apps(): void
     {
         $superAdmin = User::factory()->superAdmin()->create();
@@ -172,5 +201,25 @@ class AppAndPlanManagementTest extends TestCase
                 'is_active' => $plan->is_active,
             ])
             ->assertForbidden();
+    }
+
+    public function test_guests_are_redirected_from_app_and_plan_admin_pages(): void
+    {
+        $app = App::factory()->create();
+        $plan = LicensePlan::factory()->create([
+            'app_id' => $app->id,
+        ]);
+
+        $this->get(route('admin.apps.index'))
+            ->assertRedirect(route('login'));
+
+        $this->get(route('admin.apps.edit', $app))
+            ->assertRedirect(route('login'));
+
+        $this->get(route('admin.plans.index'))
+            ->assertRedirect(route('login'));
+
+        $this->get(route('admin.plans.edit', $plan))
+            ->assertRedirect(route('login'));
     }
 }
