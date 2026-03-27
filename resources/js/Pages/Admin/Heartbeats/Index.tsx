@@ -32,7 +32,7 @@ type Props = {
     heartbeats: ManagedHeartbeat[];
     apps: AppOption[];
     filters: {
-        app_id: number | null;
+        app_id: string;
         license_key: string;
         machine_id: string;
         installation_id: string;
@@ -43,7 +43,7 @@ type Props = {
 
 export default function HeartbeatIndex({ heartbeats, apps, filters, status = null }: Props) {
     const form = useForm({
-        app_id: filters.app_id ? String(filters.app_id) : '',
+        app_id: filters.app_id,
         license_key: filters.license_key,
         machine_id: filters.machine_id,
         installation_id: filters.installation_id,
@@ -98,7 +98,7 @@ export default function HeartbeatIndex({ heartbeats, apps, filters, status = nul
 
                     <section className="rounded-[2rem] border border-[var(--color-border)] bg-[var(--color-panel)] p-8 shadow-[0_24px_80px_rgba(19,34,56,0.08)]">
                         <form className="grid gap-4 md:grid-cols-5" onSubmit={submit}>
-                            <label className="block"><span className="mb-2 block text-sm font-medium text-slate-700">Application</span><select value={form.data.app_id} onChange={(event) => form.setData('app_id', event.target.value)} className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-600"><option value="">All apps</option>{apps.map((app) => <option key={app.id} value={app.id}>{app.name}</option>)}</select></label>
+                            <label className="block"><span className="mb-2 block text-sm font-medium text-slate-700">App ID</span><input type="text" value={form.data.app_id} onChange={(event) => form.setData('app_id', event.target.value)} className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-600" placeholder="xargo.desktop" /></label>
                             <label className="block"><span className="mb-2 block text-sm font-medium text-slate-700">License key</span><input type="text" value={form.data.license_key} onChange={(event) => form.setData('license_key', event.target.value)} className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-600" /></label>
                             <label className="block"><span className="mb-2 block text-sm font-medium text-slate-700">Machine ID</span><input type="text" value={form.data.machine_id} onChange={(event) => form.setData('machine_id', event.target.value)} className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-600" /></label>
                             <label className="block"><span className="mb-2 block text-sm font-medium text-slate-700">Installation ID</span><input type="text" value={form.data.installation_id} onChange={(event) => form.setData('installation_id', event.target.value)} className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-600" /></label>

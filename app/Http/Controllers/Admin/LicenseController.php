@@ -39,7 +39,7 @@ class LicenseController extends Controller
             'filters' => [
                 'license_key' => $request->string('license_key')->toString(),
                 'customer_email' => $request->string('customer_email')->toString(),
-                'app_id' => $request->filled('app_id') ? $request->integer('app_id') : null,
+                'app_id' => $request->string('app_id')->toString(),
                 'status' => $request->string('status')->toString(),
             ],
             'defaults' => [
@@ -250,7 +250,13 @@ class LicenseController extends Controller
         return $this->baseLicenseQuery()
             ->when($request->string('license_key')->toString() !== '', fn (Builder $query) => $query->where('license_key', 'like', '%'.$request->string('license_key')->toString().'%'))
             ->when($request->string('customer_email')->toString() !== '', fn (Builder $query) => $query->where('customer_email', 'like', '%'.$request->string('customer_email')->toString().'%'))
-            ->when($request->filled('app_id'), fn (Builder $query) => $query->where('app_id', $request->integer('app_id')))
+            ->when(
+                $request->string('app_id')->toString() !== '',
+                fn (Builder $query) => $query->whereHas(
+                    'app',
+                    fn (Builder $appQuery) => $appQuery->where('app_id', 'like', '%'.$request->string('app_id')->toString().'%')
+                )
+            )
             ->when($request->string('status')->toString() !== '', fn (Builder $query) => $query->where('status', $request->string('status')->toString()));
     }
 

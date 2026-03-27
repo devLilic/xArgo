@@ -26,7 +26,7 @@ type Props = {
         machine_id: string;
         installation_id: string;
         license_key: string;
-        app_id: number | null;
+        app_id: string;
         status: string;
     };
     status?: string | null;
@@ -37,7 +37,7 @@ export default function ActivationIndex({ activations, apps, statuses, filters, 
         machine_id: filters.machine_id,
         installation_id: filters.installation_id,
         license_key: filters.license_key,
-        app_id: filters.app_id ? String(filters.app_id) : '',
+        app_id: filters.app_id,
         status: filters.status,
     });
 
@@ -89,7 +89,7 @@ export default function ActivationIndex({ activations, apps, statuses, filters, 
                             <label className="block"><span className="mb-2 block text-sm font-medium text-slate-700">Machine ID</span><input type="text" value={form.data.machine_id} onChange={(event) => form.setData('machine_id', event.target.value)} className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-600" /></label>
                             <label className="block"><span className="mb-2 block text-sm font-medium text-slate-700">Installation ID</span><input type="text" value={form.data.installation_id} onChange={(event) => form.setData('installation_id', event.target.value)} className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-600" /></label>
                             <label className="block"><span className="mb-2 block text-sm font-medium text-slate-700">License key</span><input type="text" value={form.data.license_key} onChange={(event) => form.setData('license_key', event.target.value)} className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-600" /></label>
-                            <label className="block"><span className="mb-2 block text-sm font-medium text-slate-700">Application</span><select value={form.data.app_id} onChange={(event) => form.setData('app_id', event.target.value)} className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-600"><option value="">All apps</option>{apps.map((app) => <option key={app.id} value={app.id}>{app.name}</option>)}</select></label>
+                            <label className="block"><span className="mb-2 block text-sm font-medium text-slate-700">App ID</span><input type="text" value={form.data.app_id} onChange={(event) => form.setData('app_id', event.target.value)} className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-600" placeholder="xargo.desktop" /></label>
                             <label className="block"><span className="mb-2 block text-sm font-medium text-slate-700">Status</span><select value={form.data.status} onChange={(event) => form.setData('status', event.target.value)} className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-600"><option value="">All statuses</option>{statuses.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
                             <div className="md:col-span-5 flex gap-3">
                                 <button type="submit" className="inline-flex rounded-full bg-[var(--color-accent)] px-5 py-3 text-sm font-semibold text-white transition hover:brightness-95">Apply filters</button>

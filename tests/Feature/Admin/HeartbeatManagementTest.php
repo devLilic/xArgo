@@ -22,8 +22,8 @@ class HeartbeatManagementTest extends TestCase
         $this->withoutVite();
 
         $support = User::factory()->support()->create();
-        $desktopApp = App::factory()->create(['name' => 'Desktop']);
-        $mobileApp = App::factory()->create(['name' => 'Mobile']);
+        $desktopApp = App::factory()->create(['name' => 'Desktop', 'app_id' => 'xargo.desktop']);
+        $mobileApp = App::factory()->create(['name' => 'Mobile', 'app_id' => 'xargo.mobile']);
         $desktopPlan = LicensePlan::factory()->create(['app_id' => $desktopApp->id]);
         $mobilePlan = LicensePlan::factory()->create(['app_id' => $mobileApp->id]);
         $desktopLicense = License::factory()->create([
@@ -67,7 +67,7 @@ class HeartbeatManagementTest extends TestCase
 
         $this->actingAs($support)
             ->get(route('admin.heartbeats.index', [
-                'app_id' => $desktopApp->id,
+                'app_id' => 'xargo.desktop',
                 'license_key' => 'HB-0001',
                 'machine_id' => 'visible',
                 'installation_id' => 'visible',

@@ -21,8 +21,8 @@ class LicenseManagementTest extends TestCase
         $this->withoutVite();
 
         $support = User::factory()->support()->create();
-        $desktopApp = App::factory()->create(['name' => 'Desktop']);
-        $mobileApp = App::factory()->create(['name' => 'Mobile']);
+        $desktopApp = App::factory()->create(['name' => 'Desktop', 'app_id' => 'xargo.desktop']);
+        $mobileApp = App::factory()->create(['name' => 'Mobile', 'app_id' => 'xargo.mobile']);
         $desktopPlan = LicensePlan::factory()->create(['app_id' => $desktopApp->id]);
         $mobilePlan = LicensePlan::factory()->create(['app_id' => $mobileApp->id]);
 
@@ -49,7 +49,7 @@ class LicenseManagementTest extends TestCase
             ->get(route('admin.licenses.index', [
                 'license_key' => 'FIND-ME',
                 'customer_email' => 'findme@example.com',
-                'app_id' => $desktopApp->id,
+                'app_id' => 'xargo.desktop',
                 'status' => LicenseStatus::ACTIVE->value,
             ]))
             ->assertOk()
@@ -236,8 +236,8 @@ class LicenseManagementTest extends TestCase
     public function test_support_users_can_export_filtered_license_csv(): void
     {
         $support = User::factory()->support()->create();
-        $app = App::factory()->create(['name' => 'Desktop']);
-        $otherApp = App::factory()->create(['name' => 'Mobile']);
+        $app = App::factory()->create(['name' => 'Desktop', 'app_id' => 'xargo.desktop']);
+        $otherApp = App::factory()->create(['name' => 'Mobile', 'app_id' => 'xargo.mobile']);
         $plan = LicensePlan::factory()->create(['app_id' => $app->id, 'name' => 'Desktop Pro', 'code' => 'DESK-PRO']);
         $otherPlan = LicensePlan::factory()->create(['app_id' => $otherApp->id, 'name' => 'Mobile Pro', 'code' => 'MOB-PRO']);
 
@@ -262,7 +262,7 @@ class LicenseManagementTest extends TestCase
             ->get(route('admin.licenses.export', [
                 'license_key' => 'EXPT',
                 'customer_email' => 'export@example.com',
-                'app_id' => $app->id,
+                'app_id' => 'xargo.desktop',
                 'status' => LicenseStatus::ACTIVE->value,
             ]));
 

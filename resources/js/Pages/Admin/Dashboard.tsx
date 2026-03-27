@@ -5,6 +5,34 @@ type DashboardProps = {
     appName: string;
     environment: string;
     invitationStatus?: string | null;
+    operationalSummary: {
+        totalActiveLicenses: number;
+        expiringSoonLicenses: number;
+        recentDeviceMismatches: number;
+        recentRebinds: number;
+        staleOrInactiveActivations: number;
+    };
+    recentMismatchFeed: Array<{
+        id: number;
+        activationId: string;
+        licenseId: number;
+        licenseKey: string;
+        appId: string;
+        machineId: string;
+        installationId: string;
+        reasonCode: string | null;
+        seenAt: string | null;
+    }>;
+    recentRebindFeed: Array<{
+        id: number;
+        licenseId: number | null;
+        licenseKey: string | null;
+        entityId: number | null;
+        actor: string;
+        createdAt: string | null;
+        nextMachineId: string | null;
+        nextInstallationId: string | null;
+    }>;
     can: {
         inviteUsers: boolean;
         viewUsers: boolean;
@@ -25,6 +53,9 @@ export default function Dashboard({
     appName,
     environment,
     invitationStatus = null,
+    operationalSummary,
+    recentMismatchFeed,
+    recentRebindFeed,
     can,
     user = null,
 }: DashboardProps) {
@@ -155,6 +186,109 @@ export default function Dashboard({
                                         Sign out
                                     </Link>
                                 </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section className="grid gap-4 lg:grid-cols-5">
+                        {[
+                            { label: 'Active licenses', value: operationalSummary.totalActiveLicenses, tone: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
+                            { label: 'Expiring soon', value: operationalSummary.expiringSoonLicenses, tone: 'text-amber-700 bg-amber-50 border-amber-200' },
+                            { label: 'Recent mismatches', value: operationalSummary.recentDeviceMismatches, tone: 'text-rose-700 bg-rose-50 border-rose-200' },
+                            { label: 'Recent rebinds', value: operationalSummary.recentRebinds, tone: 'text-sky-700 bg-sky-50 border-sky-200' },
+                            { label: 'Stale or inactive', value: operationalSummary.staleOrInactiveActivations, tone: 'text-slate-700 bg-slate-50 border-slate-200' },
+                        ].map((item) => (
+                            <div key={item.label} className={`rounded-[1.5rem] border p-5 shadow-[0_18px_50px_rgba(19,34,56,0.06)] ${item.tone}`}>
+                                <p className="text-xs font-semibold uppercase tracking-[0.25em]">{item.label}</p>
+                                <p className="mt-4 text-4xl font-semibold tracking-tight">{item.value}</p>
+                            </div>
+                        ))}
+                    </section>
+
+                    <section className="grid gap-6 lg:grid-cols-2">
+                        <div className="rounded-[2rem] border border-[var(--color-border)] bg-[var(--color-panel)] p-8 shadow-[0_24px_80px_rgba(19,34,56,0.08)]">
+                            <div className="flex items-center justify-between gap-4">
+                                <div>
+                                    <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--color-accent)]">
+                                        Device Mismatches
+                                    </p>
+                                    <h2 className="mt-2 text-2xl font-semibold tracking-tight">Recent flagged activations</h2>
+                                </div>
+                                {can.viewLicenses ? (
+                                    <Link href={route('admin.activations.index')} className="text-sm font-medium text-[var(--color-accent)] hover:underline">
+                                        View all activations
+                                    </Link>
+                                ) : null}
+                            </div>
+                            <div className="mt-6 space-y-4">
+                                {recentMismatchFeed.length === 0 ? (
+                                    <p className="text-sm text-slate-500">No recent device mismatches were recorded.</p>
+                                ) : recentMismatchFeed.map((item) => (
+                                    <div key={item.id} className="rounded-2xl border border-slate-200 bg-white px-4 py-4">
+                                        <div className="flex flex-wrap items-center justify-between gap-3">
+                                            <div>
+                                                <p className="font-medium text-slate-900">{item.licenseKey}</p>
+                                                <p className="text-sm text-slate-500">{item.appId}</p>
+                                            </div>
+                                            <p className="text-sm text-slate-500">{item.seenAt ? new Date(item.seenAt).toLocaleString() : 'n/a'}</p>
+                                        </div>
+                                        <p className="mt-3 text-sm text-slate-700">{item.machineId} / {item.installationId}</p>
+                                        <div className="mt-3 flex flex-wrap gap-3 text-sm">
+                                            {can.viewLicenses ? (
+                                                <Link href={route('admin.licenses.show', item.licenseId)} className="font-medium text-[var(--color-accent)] hover:underline">
+                                                    Open license
+                                                </Link>
+                                            ) : null}
+                                            <Link href={route('admin.activations.show', item.id)} className="font-medium text-[var(--color-accent)] hover:underline">
+                                                Open activation
+                                            </Link>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="rounded-[2rem] border border-[var(--color-border)] bg-[var(--color-panel)] p-8 shadow-[0_24px_80px_rgba(19,34,56,0.08)]">
+                            <div className="flex items-center justify-between gap-4">
+                                <div>
+                                    <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--color-accent)]">
+                                        Manual Rebinds
+                                    </p>
+                                    <h2 className="mt-2 text-2xl font-semibold tracking-tight">Recent intervention history</h2>
+                                </div>
+                                {can.viewAuditLogs ? (
+                                    <Link href={route('admin.audit-logs.index', { action: 'admin.license.activation.rebound' })} className="text-sm font-medium text-[var(--color-accent)] hover:underline">
+                                        View audit trail
+                                    </Link>
+                                ) : null}
+                            </div>
+                            <div className="mt-6 space-y-4">
+                                {recentRebindFeed.length === 0 ? (
+                                    <p className="text-sm text-slate-500">No recent manual rebinds were recorded.</p>
+                                ) : recentRebindFeed.map((item) => (
+                                    <div key={item.id} className="rounded-2xl border border-slate-200 bg-white px-4 py-4">
+                                        <div className="flex flex-wrap items-center justify-between gap-3">
+                                            <div>
+                                                <p className="font-medium text-slate-900">{item.licenseKey || 'Unknown license'}</p>
+                                                <p className="text-sm text-slate-500">{item.actor}</p>
+                                            </div>
+                                            <p className="text-sm text-slate-500">{item.createdAt ? new Date(item.createdAt).toLocaleString() : 'n/a'}</p>
+                                        </div>
+                                        <p className="mt-3 text-sm text-slate-700">{item.nextMachineId || 'n/a'} / {item.nextInstallationId || 'n/a'}</p>
+                                        <div className="mt-3 flex flex-wrap gap-3 text-sm">
+                                            {item.licenseId !== null && can.viewLicenses ? (
+                                                <Link href={route('admin.licenses.show', item.licenseId)} className="font-medium text-[var(--color-accent)] hover:underline">
+                                                    Open license
+                                                </Link>
+                                            ) : null}
+                                            {can.viewAuditLogs ? (
+                                                <Link href={route('admin.audit-logs.show', item.id)} className="font-medium text-[var(--color-accent)] hover:underline">
+                                                    Open audit log
+                                                </Link>
+                                            ) : null}
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </section>

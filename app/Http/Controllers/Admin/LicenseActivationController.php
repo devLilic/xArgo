@@ -47,7 +47,7 @@ class LicenseActivationController extends Controller
                 'machine_id' => $request->string('machine_id')->toString(),
                 'installation_id' => $request->string('installation_id')->toString(),
                 'license_key' => $request->string('license_key')->toString(),
-                'app_id' => $request->filled('app_id') ? $request->integer('app_id') : null,
+                'app_id' => $request->string('app_id')->toString(),
                 'status' => $request->string('status')->toString(),
             ],
             'status' => session('status'),
@@ -201,7 +201,13 @@ class LicenseActivationController extends Controller
             ->when($request->string('machine_id')->toString() !== '', fn (Builder $query) => $query->where('machine_id', 'like', '%'.$request->string('machine_id')->toString().'%'))
             ->when($request->string('installation_id')->toString() !== '', fn (Builder $query) => $query->where('installation_id', 'like', '%'.$request->string('installation_id')->toString().'%'))
             ->when($request->string('license_key')->toString() !== '', fn (Builder $query) => $query->whereHas('license', fn (Builder $licenseQuery) => $licenseQuery->where('license_key', 'like', '%'.$request->string('license_key')->toString().'%')))
-            ->when($request->filled('app_id'), fn (Builder $query) => $query->whereHas('license', fn (Builder $licenseQuery) => $licenseQuery->where('app_id', $request->integer('app_id'))))
+            ->when(
+                $request->string('app_id')->toString() !== '',
+                fn (Builder $query) => $query->whereHas(
+                    'license.app',
+                    fn (Builder $appQuery) => $appQuery->where('app_id', 'like', '%'.$request->string('app_id')->toString().'%')
+                )
+            )
             ->when($request->string('status')->toString() !== '', fn (Builder $query) => $query->where('status', $request->string('status')->toString()));
     }
 

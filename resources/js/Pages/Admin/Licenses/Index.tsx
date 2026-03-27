@@ -25,7 +25,7 @@ type Props = {
     apps: AppOption[];
     plans: PlanOption[];
     statuses: StatusOption[];
-    filters: { license_key: string; customer_email: string; app_id: number | null; status: string };
+    filters: { license_key: string; customer_email: string; app_id: string; status: string };
     defaults: { maxDevices: number; graceHours: number };
     status?: string | null;
     can: { create: boolean; export: boolean };
@@ -35,7 +35,7 @@ export default function LicensesIndex({ licenses, apps, plans, statuses, filters
     const filterForm = useForm({
         license_key: filters.license_key,
         customer_email: filters.customer_email,
-        app_id: filters.app_id ? String(filters.app_id) : '',
+        app_id: filters.app_id,
         status: filters.status,
     });
     const createForm = useForm({
@@ -119,7 +119,7 @@ export default function LicensesIndex({ licenses, apps, plans, statuses, filters
                         <form className="grid gap-4 md:grid-cols-4" onSubmit={submitFilters}>
                             <label className="block"><span className="mb-2 block text-sm font-medium text-slate-700">License key</span><input type="text" value={filterForm.data.license_key} onChange={(event) => filterForm.setData('license_key', event.target.value)} className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-600" /></label>
                             <label className="block"><span className="mb-2 block text-sm font-medium text-slate-700">Customer email</span><input type="text" value={filterForm.data.customer_email} onChange={(event) => filterForm.setData('customer_email', event.target.value)} className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-600" /></label>
-                            <label className="block"><span className="mb-2 block text-sm font-medium text-slate-700">Application</span><select value={filterForm.data.app_id} onChange={(event) => filterForm.setData('app_id', event.target.value)} className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-600"><option value="">All apps</option>{apps.map((app) => <option key={app.id} value={app.id}>{app.name}</option>)}</select></label>
+                            <label className="block"><span className="mb-2 block text-sm font-medium text-slate-700">App ID</span><input type="text" value={filterForm.data.app_id} onChange={(event) => filterForm.setData('app_id', event.target.value)} className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-600" placeholder="xargo.desktop" /></label>
                             <label className="block"><span className="mb-2 block text-sm font-medium text-slate-700">Status</span><select value={filterForm.data.status} onChange={(event) => filterForm.setData('status', event.target.value)} className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-600"><option value="">All statuses</option>{statuses.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
                             <div className="md:col-span-4 flex gap-3">
                                 <button type="submit" className="inline-flex rounded-full bg-[var(--color-accent)] px-5 py-3 text-sm font-semibold text-white transition hover:brightness-95">Apply filters</button>

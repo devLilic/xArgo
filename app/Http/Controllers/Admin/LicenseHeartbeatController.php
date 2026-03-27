@@ -33,7 +33,7 @@ class LicenseHeartbeatController extends Controller
                 ])
                 ->all(),
             'filters' => [
-                'app_id' => $request->filled('app_id') ? $request->integer('app_id') : null,
+                'app_id' => $request->string('app_id')->toString(),
                 'license_key' => $request->string('license_key')->toString(),
                 'machine_id' => $request->string('machine_id')->toString(),
                 'installation_id' => $request->string('installation_id')->toString(),
@@ -47,10 +47,14 @@ class LicenseHeartbeatController extends Controller
     {
         return $this->baseHeartbeatQuery()
             ->when(
-                $request->filled('app_id'),
+                $request->string('app_id')->toString() !== '',
                 fn (Builder $query) => $query->whereHas(
-                    'activation.license',
-                    fn (Builder $licenseQuery) => $licenseQuery->where('app_id', $request->integer('app_id'))
+                    'activation.license.app',
+                    fn (Builder $appQuery) => $appQuery->where(
+                        'app_id',
+                        'like',
+                        '%'.$request->string('app_id')->toString().'%'
+                    )
                 )
             )
             ->when(
