@@ -5,6 +5,7 @@ namespace Tests\Feature\Admin;
 use App\Domain\Licensing\LicenseStatus;
 use App\Models\App;
 use App\Models\License;
+use App\Models\LicenseActivation;
 use App\Models\LicensePlan;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -31,6 +32,9 @@ class LicenseManagementTest extends TestCase
             'license_key' => 'XARGO-FIND-ME-0001',
             'customer_email' => 'findme@example.com',
             'status' => LicenseStatus::ACTIVE,
+        ]);
+        $visibleActivation = LicenseActivation::factory()->create([
+            'license_id' => $visibleLicense->id,
         ]);
 
         License::factory()->create([
@@ -73,6 +77,15 @@ class LicenseManagementTest extends TestCase
                 ->component('Admin/Licenses/Edit')
                 ->where('managedLicense.id', $visibleLicense->id)
                 ->where('can.update', false)
+            );
+
+        $this->actingAs($support)
+            ->get(route('admin.licenses.activations.rebind.edit', [$visibleLicense->id, $visibleActivation->id]))
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Admin/Licenses/RebindActivation')
+                ->where('managedActivation.id', $visibleActivation->id)
+                ->where('can.rebind', false)
             );
     }
 
@@ -174,6 +187,9 @@ class LicenseManagementTest extends TestCase
             'app_id' => $app->id,
             'plan_id' => $plan->id,
         ]);
+        $activation = LicenseActivation::factory()->create([
+            'license_id' => $license->id,
+        ]);
 
         $this->actingAs($support)
             ->post(route('admin.licenses.store'), [
@@ -206,6 +222,14 @@ class LicenseManagementTest extends TestCase
 
         $this->actingAs($support)
             ->patch(route('admin.licenses.restore', $license->id))
+            ->assertForbidden();
+
+        $this->actingAs($support)
+            ->patch(route('admin.licenses.activations.rebind.update', [$license->id, $activation->id]), [
+                'machine_id' => 'replacement-machine',
+                'installation_id' => 'replacement-installation',
+                'device_label' => 'Replacement Device',
+            ])
             ->assertForbidden();
     }
 
@@ -259,5 +283,47 @@ class LicenseManagementTest extends TestCase
         $this->actingAs($readOnly)
             ->get(route('admin.licenses.export'))
             ->assertForbidden();
+    }
+
+    public function test_super_admin_can_manually_rebind_an_activation(): void
+    {
+        $this->withoutVite();
+
+        $superAdmin = User::factory()->superAdmin()->create();
+        $license = License::factory()->create();
+        $activation = LicenseActivation::factory()->create([
+            'license_id' => $license->id,
+            'machine_id' => 'old-machine',
+            'installation_id' => 'old-installation',
+            'device_label' => 'Old Device',
+            'last_reason_code' => 'device_mismatch',
+            'grace_until' => now()->addMinutes(5),
+        ]);
+
+        $this->actingAs($superAdmin)
+            ->get(route('admin.licenses.activations.rebind.edit', [$license->id, $activation->id]))
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Admin/Licenses/RebindActivation')
+                ->where('managedActivation.machineId', 'old-machine')
+                ->where('can.rebind', true)
+            );
+
+        $this->actingAs($superAdmin)
+            ->patch(route('admin.licenses.activations.rebind.update', [$license->id, $activation->id]), [
+                'machine_id' => 'new-machine',
+                'installation_id' => 'new-installation',
+                'device_label' => 'New Device',
+            ])
+            ->assertRedirect(route('admin.licenses.show', $license->id))
+            ->assertSessionHas('status', 'Activation rebound manually.');
+
+        $this->assertDatabaseHas('license_activations', [
+            'id' => $activation->id,
+            'machine_id' => 'new-machine',
+            'installation_id' => 'new-installation',
+            'device_label' => 'New Device',
+            'last_reason_code' => null,
+        ]);
     }
 }

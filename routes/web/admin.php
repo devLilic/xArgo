@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\AppController;
+use App\Http\Controllers\Admin\LicenseActivationController;
 use App\Http\Controllers\Admin\LicenseController;
 use App\Http\Controllers\Admin\LicensePlanController;
 use App\Http\Controllers\Admin\UserController;
@@ -75,3 +76,15 @@ Route::delete('/licenses/{license}', [LicenseController::class, 'destroy'])
 
 Route::patch('/licenses/{license}/restore', [LicenseController::class, 'restore'])
     ->name('licenses.restore');
+
+Route::get('/activations', [LicenseActivationController::class, 'index'])
+    ->name('activations.index');
+
+Route::get('/activations/{activation}', [LicenseActivationController::class, 'show'])
+    ->name('activations.show');
+
+Route::get('/licenses/{license}/activations/{activation}/rebind', [LicenseActivationController::class, 'edit'])
+    ->name('licenses.activations.rebind.edit');
+
+Route::patch('/licenses/{license}/activations/{activation}/rebind', [LicenseActivationController::class, 'update'])
+    ->name('licenses.activations.rebind.update');

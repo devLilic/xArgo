@@ -257,7 +257,7 @@ class LicenseController extends Controller
     private function baseLicenseQuery(): Builder
     {
         return License::query()
-            ->with(['app', 'plan'])
+            ->with(['app', 'plan', 'activations'])
             ->withTrashed();
     }
 
@@ -287,6 +287,21 @@ class LicenseController extends Controller
                 'name' => $license->plan->name,
                 'code' => $license->plan->code,
             ],
+            'activations' => $license->activations
+                ->map(fn ($activation): array => [
+                    'id' => $activation->id,
+                    'activationId' => $activation->activation_id,
+                    'machineId' => $activation->machine_id,
+                    'installationId' => $activation->installation_id,
+                    'deviceLabel' => $activation->device_label,
+                    'status' => $activation->status->value,
+                    'firstSeenAt' => $activation->first_seen_at?->toIso8601String(),
+                    'lastSeenAt' => $activation->last_seen_at?->toIso8601String(),
+                    'graceUntil' => $activation->grace_until?->toIso8601String(),
+                    'lastReasonCode' => $activation->last_reason_code,
+                ])
+                ->values()
+                ->all(),
         ];
     }
 
@@ -337,6 +352,7 @@ class LicenseController extends Controller
             'changeStatus' => $request->user()->can('changeStatus', $license),
             'delete' => $request->user()->can('delete', $license) && ! $license->trashed(),
             'restore' => $request->user()->can('restore', $license) && $license->trashed(),
+            'rebindActivation' => $request->user()->can('update', $license),
         ];
     }
 

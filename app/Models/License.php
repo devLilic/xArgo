@@ -55,4 +55,9 @@ class License extends Model
     {
         return $this->hasMany(LicenseEntitlement::class);
     }
+
+    public function activations(): HasMany
+    {
+        return $this->hasMany(LicenseActivation::class);
+    }
 }

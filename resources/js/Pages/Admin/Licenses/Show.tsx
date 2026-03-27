@@ -16,12 +16,24 @@ type ManagedLicense = {
     createdAt: string | null;
     app: { id: number; name: string; appId: string };
     plan: { id: number; name: string; code: string };
+    activations: {
+        id: number;
+        activationId: string;
+        machineId: string;
+        installationId: string;
+        deviceLabel: string | null;
+        status: string;
+        firstSeenAt: string | null;
+        lastSeenAt: string | null;
+        graceUntil: string | null;
+        lastReasonCode: string | null;
+    }[];
 };
 
 type Props = {
     managedLicense: ManagedLicense;
     status?: string | null;
-    can: { update: boolean; changeStatus: boolean; delete: boolean; restore: boolean };
+    can: { update: boolean; changeStatus: boolean; delete: boolean; restore: boolean; rebindActivation: boolean };
 };
 
 export default function ShowLicense({ managedLicense, status = null, can }: Props) {
@@ -77,6 +89,59 @@ export default function ShowLicense({ managedLicense, status = null, can }: Prop
                                 {can.restore ? <button type="button" onClick={() => router.patch(route('admin.licenses.restore', managedLicense.id))} className="inline-flex rounded-full border border-sky-300 px-5 py-3 text-sm font-semibold text-sky-800 transition hover:border-sky-500">Restore</button> : null}
                             </div>
                         </article>
+                    </section>
+
+                    <section className="rounded-[2rem] border border-[var(--color-border)] bg-[var(--color-panel)] p-8 shadow-[0_24px_80px_rgba(19,34,56,0.08)]">
+                        <div className="flex items-center justify-between gap-4">
+                            <div>
+                                <h2 className="text-xl font-semibold tracking-tight text-slate-900">Device activations</h2>
+                                <p className="mt-2 text-sm text-slate-600">Review current device bindings and manually rebind when an installation must be moved.</p>
+                            </div>
+                        </div>
+                        <div className="mt-6 overflow-x-auto">
+                            <table className="min-w-full divide-y divide-slate-200">
+                                <thead className="bg-slate-50">
+                                    <tr className="text-left text-xs uppercase tracking-[0.2em] text-slate-500">
+                                        <th className="px-4 py-3 font-medium">Activation</th>
+                                        <th className="px-4 py-3 font-medium">Device</th>
+                                        <th className="px-4 py-3 font-medium">Status</th>
+                                        <th className="px-4 py-3 font-medium">Last seen</th>
+                                        <th className="px-4 py-3 font-medium"></th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100 bg-white">
+                                    {managedLicense.activations.map((activation) => (
+                                        <tr key={activation.id} className="text-sm text-slate-700">
+                                            <td className="px-4 py-3">
+                                                <div className="font-medium text-slate-900">{activation.activationId}</div>
+                                                <div className="text-slate-500">{activation.installationId}</div>
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <div className="font-medium text-slate-900">{activation.deviceLabel || 'Unnamed device'}</div>
+                                                <div className="text-slate-500">{activation.machineId}</div>
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <div>{activation.status}</div>
+                                                <div className="text-slate-500">{activation.lastReasonCode || 'no reason code'}</div>
+                                            </td>
+                                            <td className="px-4 py-3 text-slate-500">
+                                                {activation.lastSeenAt ? new Date(activation.lastSeenAt).toLocaleString() : 'n/a'}
+                                            </td>
+                                            <td className="px-4 py-3 text-right">
+                                                {can.rebindActivation ? (
+                                                    <Link
+                                                        href={route('admin.licenses.activations.rebind.edit', [managedLicense.id, activation.id])}
+                                                        className="text-sm font-medium text-[var(--color-accent)] hover:underline"
+                                                    >
+                                                        Review rebind
+                                                    </Link>
+                                                ) : null}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </section>
                 </div>
             </main>

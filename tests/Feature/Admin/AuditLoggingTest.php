@@ -6,6 +6,7 @@ use App\Domain\Auth\Role;
 use App\Domain\Licensing\LicenseStatus;
 use App\Models\App;
 use App\Models\License;
+use App\Models\LicenseActivation;
 use App\Models\LicensePlan;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -207,6 +208,30 @@ class AuditLoggingTest extends TestCase
             'event' => 'admin.license.restored',
             'target_type' => 'license',
             'target_id' => $license->id,
+        ]);
+    }
+
+    public function test_license_activation_rebind_is_audited(): void
+    {
+        $actor = User::factory()->superAdmin()->create();
+        $license = License::factory()->create();
+        $activation = LicenseActivation::factory()->create([
+            'license_id' => $license->id,
+        ]);
+
+        $this->actingAs($actor)
+            ->patch(route('admin.licenses.activations.rebind.update', [$license->id, $activation->id]), [
+                'machine_id' => 'rebound-machine',
+                'installation_id' => 'rebound-installation',
+                'device_label' => 'Rebound Device',
+            ])
+            ->assertRedirect(route('admin.licenses.show', $license->id));
+
+        $this->assertDatabaseHas('audit_logs', [
+            'actor_id' => $actor->id,
+            'event' => 'admin.license.activation.rebound',
+            'target_type' => 'license_activation',
+            'target_id' => $activation->id,
         ]);
     }
 }
