@@ -3,10 +3,12 @@
 namespace App\Providers;
 
 use App\Models\App;
+use App\Models\License;
 use App\Models\LicensePlan;
 use App\Models\User;
 use App\Models\UserInvitation;
 use App\Policies\AppPolicy;
+use App\Policies\LicensePolicy;
 use App\Policies\LicensePlanPolicy;
 use App\Policies\UserInvitationPolicy;
 use App\Policies\UserPolicy;
@@ -30,6 +32,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Gate::policy(App::class, AppPolicy::class);
+        Gate::policy(License::class, LicensePolicy::class);
         Gate::policy(LicensePlan::class, LicensePlanPolicy::class);
         Gate::policy(User::class, UserPolicy::class);
         Gate::policy(UserInvitation::class, UserInvitationPolicy::class);

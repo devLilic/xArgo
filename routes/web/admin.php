@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\AppController;
+use App\Http\Controllers\Admin\LicenseController;
 use App\Http\Controllers\Admin\LicensePlanController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UserInvitationController;
@@ -47,3 +48,27 @@ Route::get('/plans/{plan}/edit', [LicensePlanController::class, 'edit'])
 
 Route::patch('/plans/{plan}', [LicensePlanController::class, 'update'])
     ->name('plans.update');
+
+Route::get('/licenses', [LicenseController::class, 'index'])
+    ->name('licenses.index');
+
+Route::post('/licenses', [LicenseController::class, 'store'])
+    ->name('licenses.store');
+
+Route::get('/licenses/{license}', [LicenseController::class, 'show'])
+    ->name('licenses.show');
+
+Route::get('/licenses/{license}/edit', [LicenseController::class, 'edit'])
+    ->name('licenses.edit');
+
+Route::patch('/licenses/{license}', [LicenseController::class, 'update'])
+    ->name('licenses.update');
+
+Route::patch('/licenses/{license}/status', [LicenseController::class, 'updateStatus'])
+    ->name('licenses.status.update');
+
+Route::delete('/licenses/{license}', [LicenseController::class, 'destroy'])
+    ->name('licenses.destroy');
+
+Route::patch('/licenses/{license}/restore', [LicenseController::class, 'restore'])
+    ->name('licenses.restore');
